@@ -1,3 +1,4 @@
+@php use App\Models\Configuracao; @endphp
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>

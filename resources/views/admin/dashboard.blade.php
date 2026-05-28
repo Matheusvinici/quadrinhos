@@ -114,7 +114,7 @@
                             {{ $caixaHoje->fechado ? 'Fechado' : 'Aberto' }}
                         </span>
                     @else
-                        <a href="{{ route('admin.caixa.index') }}" class="btn btn-sm btn-outline-primary">Abrir Caixa</a>
+                        <a href="{{ route('admin.caixa.index') }}" class="btn btn-sm btn-outline-primary px-3">Abrir Caixa</a>
                     @endif
                 </div>
             </div>
@@ -125,14 +125,14 @@
                 <h5 class="card-title">Ações Rápidas</h5>
             </div>
             <div class="card-body">
-                <a href="{{ route('admin.agendamentos.index') }}" class="btn btn-primary btn-block mb-2">
-                    <i class="fas fa-plus"></i> Novo Agendamento
+                <a href="{{ route('admin.agendamentos.index') }}" class="btn btn-outline-primary btn-block mb-2">
+                    <i class="fas fa-plus me-2"></i> Novo Agendamento
                 </a>
-                <a href="{{ route('admin.relatorios.faturamento') }}" class="btn btn-success btn-block mb-2">
-                    <i class="fas fa-chart-bar"></i> Relatório de Faturamento
+                <a href="{{ route('admin.relatorios.faturamento') }}" class="btn btn-outline-primary btn-block mb-2">
+                    <i class="fas fa-chart-bar me-2"></i> Relatório de Faturamento
                 </a>
-                <a href="{{ route('admin.caixa.index') }}" class="btn btn-warning btn-block">
-                    <i class="fas fa-cash-register"></i> Gerenciar Caixa
+                <a href="{{ route('admin.caixa.index') }}" class="btn btn-outline-primary btn-block">
+                    <i class="fas fa-cash-register me-2"></i> Gerenciar Caixa
                 </a>
             </div>
         </div>

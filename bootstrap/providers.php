@@ -2,7 +2,5 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-    // App\Providers\CalendarioServiceProvider::class,
-    App\Providers\UnidadeServiceProvider::class,
-    // App\Providers\ViewServiceProvider::class,
+    App\Providers\FortifyServiceProvider::class,
 ];

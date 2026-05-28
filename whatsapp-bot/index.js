@@ -322,21 +322,17 @@ async function sendMsg(to, message) {
 // Reminder system - check every minute for appointments 1 hour away
 setInterval(async () => {
     try {
-        const now = new Date();
-        const targetHour = now.getHours().toString().padStart(2, '0');
-        const targetMinute = (now.getMinutes() + 1).toString().padStart(2, '0'); // 1 minute window
-        const targetTime = `${targetHour}:${targetMinute}`;
-
-        const today = now.toISOString().split('T')[0];
-        const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
-        const reminderHour = nextHour.getHours().toString().padStart(2, '0');
-        const reminderMinute = nextHour.getMinutes().toString().padStart(2, '0');
-        const reminderTime = `${reminderHour}:${reminderMinute}`;
-
-        // We'd need an API endpoint to get appointments close to reminder time
-        // For now, we rely on a webhook approach from the server
+        const { data } = await axios.get(`${APP_URL}/api/bot/lembretes`);
+        if (!data.length) return;
+        for (const ag of data) {
+            const numero = ag.cliente_telefone.replace(/\D/g, '');
+            const chatId = `55${numero}@c.us`;
+            const msg = `✂️ *Lembrete de Agendamento*\n\nOlá *${ag.cliente_nome}*! Lembramos que você tem um horário marcado hoje às *${ag.hora}* com *${ag.barbeiro_nome}*.\n\nServiço: ${ag.servicos}\n\nTe esperamos! 🫡`;
+            await client.sendMessage(chatId, msg);
+            console.log(`Reminder sent to ${ag.cliente_nome} (${ag.cliente_telefone})`);
+        }
     } catch (err) {
-        // silent
+        // silent - server may not be running
     }
 }, 60000);
 

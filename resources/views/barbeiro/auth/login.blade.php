@@ -7,13 +7,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); height: 100vh; }
-        .login-card { border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: none; }
-        .login-header { background: #0f3460; color: white; border-radius: 15px 15px 0 0; padding: 30px; text-align: center; }
-        .login-header h4 { margin: 0; font-weight: 600; }
-        .login-header p { margin: 5px 0 0; opacity: 0.8; font-size: 0.9rem; }
-        .btn-login { background: #e94560; border: none; border-radius: 8px; padding: 12px; font-weight: 600; }
-        .btn-login:hover { background: #d63851; }
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: #f8f9fa; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-card { border: none; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04); }
+        .login-header { background: #ffffff; padding: 2rem 2rem 1rem; text-align: center; border-bottom: 1px solid #f1f3f5; }
+        .login-header h4 { margin: 0; font-weight: 600; color: #212529; letter-spacing: -0.3px; }
+        .login-header p { margin: 4px 0 0; color: #868e96; font-size: 0.85rem; }
+        .login-header i { color: #212529; }
+        .btn-login { background-color: #212529; border: none; border-radius: 8px; padding: 12px; font-weight: 600; font-size: 0.875rem; }
+        .btn-login:hover { background-color: #343a40; }
     </style>
 </head>
 <body>
