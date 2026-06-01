@@ -167,28 +167,39 @@ class CriarHistoriaController extends Controller
         $prompt = $this->montarPrompt($historia);
         $historia->update(['prompt_gerado' => $prompt]);
 
-        $respostaGemini = $this->chamarGemini($prompt);
+        $apiKey = config('services.gemini.key');
+        if (!$apiKey) {
+            $respostaGemini = null;
+            $panelTexts = [
+                "Olá! Eu sou {$historia->aluno->nome} e essa é minha história!",
+                "Para gerar sua HQ completa, o mediador precisa configurar a chave da API Gemini no arquivo .env",
+                "Peça ajuda ao seu professor para ativar a inteligência artificial!",
+                "Enquanto isso, que tal desenhar sua própria história no papel?"
+            ];
+            $panelImages = [];
+        } else {
+            $respostaGemini = $this->chamarGemini($prompt);
+            $panelImages = [];
+            $panelTexts = [];
 
-        $slug = $historia->slug;
-        $storagePath = "hqs/{$slug}";
-        Storage::disk('public')->makeDirectory($storagePath);
+            $slug = $historia->slug;
+            $storagePath = "hqs/{$slug}";
+            Storage::disk('public')->makeDirectory($storagePath);
 
-        $panelImages = [];
-        $panelTexts = [];
+            if ($respostaGemini && isset($respostaGemini['candidates'][0]['content']['parts'])) {
+                $parts = $respostaGemini['candidates'][0]['content']['parts'];
+                $imageIndex = 0;
 
-        if ($respostaGemini && isset($respostaGemini['candidates'][0]['content']['parts'])) {
-            $parts = $respostaGemini['candidates'][0]['content']['parts'];
-            $imageIndex = 0;
-
-            foreach ($parts as $part) {
-                if (isset($part['text'])) {
-                    $panelTexts[] = $part['text'];
-                } elseif (isset($part['inlineData']) && $part['inlineData']['mimeType'] === 'image/png') {
-                    $imageData = base64_decode($part['inlineData']['data']);
-                    $imagePath = "{$storagePath}/painel_{$imageIndex}.png";
-                    Storage::disk('public')->put($imagePath, $imageData);
-                    $panelImages[] = Storage::url($imagePath);
-                    $imageIndex++;
+                foreach ($parts as $part) {
+                    if (isset($part['text'])) {
+                        $panelTexts[] = $part['text'];
+                    } elseif (isset($part['inlineData']) && $part['inlineData']['mimeType'] === 'image/png') {
+                        $imageData = base64_decode($part['inlineData']['data']);
+                        $imagePath = "{$storagePath}/painel_{$imageIndex}.png";
+                        Storage::disk('public')->put($imagePath, $imageData);
+                        $panelImages[] = Storage::url($imagePath);
+                        $imageIndex++;
+                    }
                 }
             }
         }
@@ -239,35 +250,32 @@ class CriarHistoriaController extends Controller
         $etapa4 = $respostas->get(4, collect());
 
         $formatar = function ($items) {
-            return $items->pluck('resposta', 'pergunta')
-                ->map(fn($v, $k) => "- {$k}: {$v}")
+            return $items->pluck('resposta')
+                ->map(fn($v) => "- {$v}")
                 ->implode("\n");
         };
 
+        $dados = "Nome: " . $historia->aluno->nome . "\n";
+        $dados .= "Série: " . $historia->aluno->serie . "\n";
+        $dados .= "Características:\n" . $formatar($etapa1) . "\n\n";
+        $dados .= "Território:\n" . $formatar($etapa2) . "\n\n";
+        $dados .= "Relações:\n" . $formatar($etapa3) . "\n\n";
+        $dados .= "Sonhos:\n" . $formatar($etapa4);
+
         return <<<PROMPT
-Seja um profissional de histórias em quadrinhos. Crie uma história em quadrinhos infantil e colorida sobre um aluno.
+Seja um profissional de histórias em quadrinhos. Crie uma HQ infantil colorida com no máximo 8 quadros.
 
 ## Dados do Aluno:
-{$formatar($etapa1)}
-
-## Onde vive:
-{$formatar($etapa2)}
-
-## Família e Amigos:
-{$formatar($etapa3)}
-
-## Sonhos e Desafios:
-{$formatar($etapa4)}
+{$dados}
 
 ## Instruções:
-- A história deve ter EXATAMENTE 4 a 8 quadros (painéis).
-- Cada quadro deve ter UMA ilustração colorida em estilo de desenho infantil, traço escolar.
-- Cada quadro deve ter falas simples e curtas dos personagens, em português brasileiro.
-- A linguagem deve ser apropriada para crianças.
-- O protagonista da história é o próprio aluno.
-- A história deve ser positiva, lúdica e inspiradora.
-- Inclua os lugares, pessoas e elementos da vida real do aluno na narrativa.
-- Formato: Gere cada quadro alternando entre descrição em texto da cena e a ilustração correspondente.
+- Desenhos infantis com traço escolar colorido
+- Falas simples em português brasileiro, linguagem para crianças
+- Protagonista é o próprio aluno
+- História positiva, lúdica e inspiradora
+- Inclua lugares, pessoas e elementos reais da vida do aluno
+- Cada quadro: cena ilustrada com personagens e fundo
+- Formato: alterne descrição de cena em texto e ilustração
 PROMPT;
     }
 

@@ -1,61 +1,71 @@
 # AGENTS.md
 
-## Project
-Laravel 11 barbershop management system (`barbearia` DB) with WhatsApp bot integration. Full financial control.
+## Jua Literária Juazeiro
+Sistema interativo para criação de histórias em quadrinhos personalizadas. Alunos preenchem um wizard de 4 etapas sobre sua identidade, e o Google Gemini gera automaticamente uma HQ com texto e imagens. O resultado é exportado em PDF estilo gibi com QR Code para compartilhamento.
 
-## Auth
-- **guard `web`**: Admin users (full access) — `App\Models\User`
-- **guard `barbeiro`**: Barbers (limited to own appointments) — `App\Models\Barbeiro`
+## Acesso
 
-Barbers log in at `/barbeiro/login`. Admin at `/login`.
+| Tipo | URL | Credenciais |
+|------|-----|-------------|
+| **Aluno** (touch/TV) | `/` | Nome + Série (sem senha) |
+| **Mediador** (admin) | `/login` | `admin@admin.com` / `123456` |
 
-## Commands
+## Fluxo do Aluno
 
-| Command | Purpose |
-|---------|---------|
-| `composer dev` | Runs server + queue + logs + Vite concurrently |
-| `php artisan migrate` | Run migrations |
-| `php artisan db:seed --class=DatabaseSeeder` | Seed admin user + settings |
-| `npm run build` / `npm run dev` | Vite asset build |
-| `php artisan notifications:table` | Create notifications migration |
-| `php artisan test` / `vendor/bin/phpunit` | Run tests |
+1. Tela inicial "Jua Literária Juazeiro" → **Nova História**
+2. Digita **nome** e **série** (cadastro automático)
+3. **Etapa 1** — Quem é você? (nome, idade, aparência)
+4. **Etapa 2** — Onde você vive? (bairro, lugares, escola)
+5. **Etapa 3** — Quem está com você? (família, amigos)
+6. **Etapa 4** — O que te move? (sonhos, brincadeiras, desafios)
+7. **Revisão** — resumo de tudo
+8. **Geração** — chama Gemini API → PDF → QR Code
+9. **Resultado** — QR Code na tela + botão de download PDF
 
-## Architecture
+## Comandos
 
-- **Routes**: `routes/web.php` (admin + barber) and `routes/api.php` (WhatsApp bot API)
-- **Admin namespace**: `App\Http\Controllers\Admin\`
-- **Barber namespace**: `App\Http\Controllers\Barbeiro\`
-- **Bot namespace**: `App\Http\Controllers\Bot\`
-- **Layout**: AdminLTE 4 / Bootstrap 5
-- **Queue**: `database` driver (jobs table)
-- **Notifications**: Laravel Database Notifications (bell icon in AdminLTE)
+| Comando | Função |
+|---------|--------|
+| `composer dev` | Servidor + Vite |
+| `php artisan migrate` | Rodar migrations |
+| `php artisan migrate:fresh` | Resetar banco |
+| `php artisan db:seed` | Criar admin padrão |
+| `php artisan storage:link` | Link do storage público |
+| `npm run build` / `npm run dev` | Assets Vite |
 
-## WhatsApp Bot
+## Estrutura
 
-- **Project**: `whatsapp-bot/` (Node.js + whatsapp-web.js + Express)
-- **Flow**: Barber → Day → Time → Service → Confirm
-- **Reminder**: Bot sends reminder 1h before appointment
-- **Webhook**: Bot calls GET/POST on `https://yourdomain.com/api/bot/...`
-- **Run**: `npm start` in `whatsapp-bot/` directory
+### Rotas
+- **`routes/web.php`** — Rotas do site (alunos) + admin (mediador)
+- **SiteController** — Welcome, entrar, biblioteca
+- **CriarHistoriaController** — Wizard 4 etapas, Gemini, PDF, QR Code
 
-## Financial Module
+### Modelos
+- **Aluno** — `id, nome, serie`
+- **Historia** — `id, aluno_id, status, prompt_gerado, resposta_gemini, pdf_path, slug, qr_code_path`
+- **RespostaAluno** — `id, historia_id, etapa, pergunta, resposta`
 
-- **Despesas**: CRUD with categories, payment methods, paid/pending
-- **Caixa**: Daily opening/closing with cash flow tracking
-- **Relatorios**: Reports by period, by barber, by service
+### Admin
+- **Dashboard** — Stats (alunos, histórias, hoje)
+- **Histórias** — Listar, ver detalhes, baixar PDF, excluir
+- **Alunos** — Listar, ver histórias de cada um
+
+## Integração Gemini
+
+- **Modelo**: `gemini-2.0-flash-exp` (com suporte a imagens)
+- **Fallback**: `gemini-2.0-flash` (texto apenas)
+- **Chave**: configurar `GEMINI_API_KEY` no `.env`
+- **Prompt**: montado automaticamente com dados das 4 etapas
 
 ## Setup
 
-1. Create MySQL DB `barbearia` and update `.env`
+1. `cp .env.example .env` (ou editar `.env` com `GEMINI_API_KEY`)
 2. `php artisan migrate`
 3. `php artisan db:seed`
-4. `composer dev`
-5. `cd whatsapp-bot && npm start` (scan QR code)
+4. `php artisan storage:link`
+5. `composer dev`
 
-## Gotchas
-
-- Bot requires `whatsapp-bot/.env` with `APP_URL` pointing to the Laravel server
-- For local bot testing, use a tunnel like `ngrok` or serve over LAN
-- Barbers login with email + password (different from admin users)
-- After seeding, admin credentials: admin@admin.com / 123456
-- DB name is `barbearia` (not `idiomas2026`)
+## Interface
+- TV / touch screen (1920x1080)
+- Nunito font, cores vibrantes, botões grandes
+- Fundo gradiente animado com estrelas flutuantes
