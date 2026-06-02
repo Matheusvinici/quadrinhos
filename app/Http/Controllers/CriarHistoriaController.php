@@ -302,11 +302,11 @@ class CriarHistoriaController extends Controller
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => $model,
                 'messages' => [
-                    ['role' => 'system', 'content' => 'Voce e um assistente que cria historias em quadrinhos infantis. Responda sempre em portugues brasileiro.'],
+                    ['role' => 'system', 'content' => 'Voce e um assistente que cria historias em quadrinhos infantis. Responda SEMPRE em portugues brasileiro. Gere EXATAMENTE 4 frases curtas separadas por ---. Nao use numeracao. Nao inclua introducao ou conclusao. Apenas as 4 frases separadas por ---.'],
                     ['role' => 'user', 'content' => $prompt],
                 ],
-                'max_tokens' => 600,
-                'temperature' => 0.7,
+                'max_tokens' => 1024,
+                'temperature' => 0.8,
             ]);
 
             if (!$response->successful()) {
@@ -314,27 +314,6 @@ class CriarHistoriaController extends Controller
             }
 
             $text = $response->json('choices.0.message.content', '');
-        } catch (\Exception $e) {
-            $nome = $historia && $historia->aluno ? $historia->aluno->nome : 'Aluno';
-            return [
-                'panel_texts' => [
-                    "Ola! Eu sou {$nome} e essa e minha historia!",
-                    "Infelizmente a IA nao conseguiu gerar sua HQ agora.",
-                    "Tente novamente clicando no botao 'Gerar com IA'.",
-                    "Enquanto isso, que tal desenhar sua historia no papel?"
-                ],
-                'panel_images' => [],
-            ];
-        }
-    }
-
-            $text = $response->json('response', '');
-
-            if (preg_match('/<think>.*?<\/think>/s', $text)) {
-                $text = preg_replace('/<think>.*?<\/think>/s', '', $text);
-            }
-
-            $text = trim(preg_replace('/[\x00-\x1F\x7F]/', '', $text));
 
             $parts = preg_split('/---+/', $text);
             $panelTexts = [];
@@ -376,8 +355,8 @@ class CriarHistoriaController extends Controller
             return [
                 'panel_texts' => [
                     "Ola! Eu sou {$nome} e essa e minha historia!",
-                    "Infelizmente a IA local nao conseguiu gerar sua HQ agora.",
-                    "Tente novamente mais clicando no botao 'Gerar com IA'.",
+                    "Infelizmente a IA nao conseguiu gerar sua HQ agora.",
+                    "Tente novamente clicando no botao 'Gerar com IA'.",
                     "Enquanto isso, que tal desenhar sua historia no papel?"
                 ],
                 'panel_images' => [],
