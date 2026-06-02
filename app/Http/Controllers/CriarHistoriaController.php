@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Mpdf\Mpdf;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use chillerlan\QRCode\Output\QRGdImagePNG;
@@ -259,11 +259,24 @@ class CriarHistoriaController extends Controller
         }
 
         $aluno = $historia->aluno;
-        $pdf = Pdf::loadView('hq.pdf', compact('historia', 'aluno', 'panelImages', 'panelTexts'));
-        $pdf->setPaper('a4');
+
+        $html = view('hq.pdf', compact('historia', 'aluno', 'panelImages', 'panelTexts'))->render();
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'margin_top' => 15,
+            'margin_bottom' => 15,
+            'margin_left' => 15,
+            'margin_right' => 15,
+        ]);
+        $mpdf->WriteHTML($html);
 
         $alunoNome = Str::slug($aluno->nome);
-        return $pdf->download("HQ_{$alunoNome}.pdf");
+        return response($mpdf->Output("HQ_{$alunoNome}.pdf", 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="HQ_' . $alunoNome . '.pdf"',
+        ]);
     }
 
     private function montarPrompt($historia)
@@ -373,11 +386,20 @@ PROMPT;
         $slug = $historia->slug;
         $aluno = $historia->aluno;
 
-        $pdf = Pdf::loadView('hq.pdf', compact('historia', 'aluno', 'panelImages', 'panelTexts'));
-        $pdf->setPaper('a4');
+        $html = view('hq.pdf', compact('historia', 'aluno', 'panelImages', 'panelTexts'))->render();
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'margin_top' => 15,
+            'margin_bottom' => 15,
+            'margin_left' => 15,
+            'margin_right' => 15,
+        ]);
+        $mpdf->WriteHTML($html);
 
         $path = "hqs/{$slug}/historia.pdf";
-        Storage::disk('public')->put($path, $pdf->output());
+        Storage::disk('public')->put($path, $mpdf->Output('', 'S'));
 
         return $path;
     }

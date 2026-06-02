@@ -16,6 +16,7 @@
         "laravel/tinker": "^2.9",
         "laravel/ui": "^4.5",
         "livewire/livewire": "^3.6",
+        "mpdf/mpdf": "^8.3",
         "spatie/laravel-permission": "^6.19"
     },
     "require-dev": {
