@@ -205,6 +205,10 @@ class CriarHistoriaController extends Controller
             }
         }
 
+        $respostaGemini = $respostaGemini ?? [];
+        $respostaGemini['panel_texts'] = $panelTexts;
+        $respostaGemini['panel_images'] = $panelImages;
+
         $historia->update([
             'status' => 'concluido',
             'resposta_gemini' => $respostaGemini,
@@ -232,14 +236,34 @@ class CriarHistoriaController extends Controller
 
     public function downloadPdf($slug)
     {
-        $historia = Historia::where('slug', $slug)->firstOrFail();
+        $historia = Historia::with('aluno')->where('slug', $slug)->firstOrFail();
 
-        if (!$historia->pdf_path || !Storage::disk('public')->exists($historia->pdf_path)) {
-            abort(404);
+        $panelTexts = [];
+        $panelImages = [];
+
+        $resposta = $historia->resposta_gemini;
+        if ($resposta && isset($resposta['panel_texts'])) {
+            $panelTexts = $resposta['panel_texts'];
+        }
+        if ($resposta && isset($resposta['panel_images'])) {
+            $panelImages = $resposta['panel_images'];
         }
 
-        $alunoNome = Str::slug($historia->aluno->nome);
-        return Storage::disk('public')->download($historia->pdf_path, "HQ_{$alunoNome}.pdf");
+        if (empty($panelTexts)) {
+            $panelTexts = [
+                "Olá! Eu sou {$historia->aluno->nome} e essa é minha história!",
+                "Esta história foi criada com as informações que você compartilhou.",
+                "Compartilhe com seus amigos e familiares!",
+                "Obrigado por fazer parte da Jua Literária Juazeiro!"
+            ];
+        }
+
+        $aluno = $historia->aluno;
+        $pdf = Pdf::loadView('hq.pdf', compact('historia', 'aluno', 'panelImages', 'panelTexts'));
+        $pdf->setPaper('a4');
+
+        $alunoNome = Str::slug($aluno->nome);
+        return $pdf->download("HQ_{$alunoNome}.pdf");
     }
 
     private function montarPrompt($historia)

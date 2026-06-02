@@ -27,6 +27,7 @@
             <div class="d-flex flex-column align-items-center gap-3 mt-4">
                 @if($historia->pdf_path)
                     <a href="{{ route('site.criar.download-pdf', ['slug' => $historia->slug]) }}"
+                       target="_blank"
                        class="btn-giant btn-green" style="min-width: 350px;">
                         📥 Baixar PDF da HQ
                     </a>
