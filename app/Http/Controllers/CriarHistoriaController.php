@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Mpdf\Mpdf;
+
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use chillerlan\QRCode\Output\QRGdImagePNG;
@@ -214,11 +214,9 @@ class CriarHistoriaController extends Controller
             'resposta_gemini' => $respostaGemini,
         ]);
 
-        $pdfPath = $this->gerarPdf($historia, $panelImages, $panelTexts);
         $qrCodePath = $this->gerarQRCode($historia);
 
         $historia->update([
-            'pdf_path' => $pdfPath,
             'qr_code_path' => $qrCodePath,
         ]);
 
@@ -234,7 +232,7 @@ class CriarHistoriaController extends Controller
         return view('site.resultado', compact('historia'));
     }
 
-    public function downloadPdf($slug)
+    public function imprimir($slug)
     {
         $historia = Historia::with('aluno')->where('slug', $slug)->firstOrFail();
 
@@ -260,153 +258,12 @@ class CriarHistoriaController extends Controller
 
         $aluno = $historia->aluno;
 
-        $html = view('hq.pdf', compact('historia', 'aluno', 'panelImages', 'panelTexts'))->render();
-
-        $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'margin_top' => 15,
-            'margin_bottom' => 15,
-            'margin_left' => 15,
-            'margin_right' => 15,
-        ]);
-        $mpdf->WriteHTML($html);
-
-        $alunoNome = Str::slug($aluno->nome);
-        return response($mpdf->Output("HQ_{$alunoNome}.pdf", 'S'), 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="HQ_' . $alunoNome . '.pdf"',
-        ]);
-    }
-
-    private function montarPrompt($historia)
-    {
-        $respostas = $historia->respostas->groupBy('etapa');
-        $etapa1 = $respostas->get(1, collect());
-        $etapa2 = $respostas->get(2, collect());
-        $etapa3 = $respostas->get(3, collect());
-        $etapa4 = $respostas->get(4, collect());
-
-        $formatar = function ($items) {
-            return $items->pluck('resposta')
-                ->map(fn($v) => "- {$v}")
-                ->implode("\n");
-        };
-
-        $dados = "Nome: " . $historia->aluno->nome . "\n";
-        $dados .= "Série: " . $historia->aluno->serie . "\n";
-        $dados .= "Características:\n" . $formatar($etapa1) . "\n\n";
-        $dados .= "Território:\n" . $formatar($etapa2) . "\n\n";
-        $dados .= "Relações:\n" . $formatar($etapa3) . "\n\n";
-        $dados .= "Sonhos:\n" . $formatar($etapa4);
-
-        return <<<PROMPT
-Seja um profissional de histórias em quadrinhos. Crie uma HQ infantil colorida com no máximo 8 quadros.
-
-## Dados do Aluno:
-{$dados}
-
-## Instruções:
-- Desenhos infantis com traço escolar colorido
-- Falas simples em português brasileiro, linguagem para crianças
-- Protagonista é o próprio aluno
-- História positiva, lúdica e inspiradora
-- Inclua lugares, pessoas e elementos reais da vida do aluno
-- Cada quadro: cena ilustrada com personagens e fundo
-- Formato: alterne descrição de cena em texto e ilustração
-PROMPT;
-    }
-
-    private function chamarGemini($prompt)
-    {
-        $apiKey = config('services.gemini.key');
-        if (!$apiKey) {
-            return null;
-        }
-
-        $models = [
-            'gemini-2.0-flash-exp',
-            'gemini-2.0-flash',
-        ];
-
-        foreach ($models as $model) {
-            try {
-                $response = Http::timeout(120)->post(
-                    "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
-                    [
-                        'contents' => [
-                            ['parts' => [['text' => $prompt]]],
-                        ],
-                        'generationConfig' => [
-                            'responseModalities' => ['TEXT', 'IMAGE'],
-                            'temperature' => 0.9,
-                            'maxOutputTokens' => 8192,
-                        ],
-                    ]
-                );
-
-                if ($response->successful()) {
-                    $data = $response->json();
-                    if ($data && isset($data['candidates'])) {
-                        return $data;
-                    }
-                }
-            } catch (\Exception $e) {
-                continue;
-            }
-        }
-
-        // Fallback: text-only with gemini-2.0-flash
-        try {
-            $response = Http::timeout(120)->post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}",
-                [
-                    'contents' => [
-                        ['parts' => [['text' => $prompt]]],
-                    ],
-                    'generationConfig' => [
-                        'temperature' => 0.9,
-                        'maxOutputTokens' => 8192,
-                    ],
-                ]
-            );
-
-            if ($response->successful()) {
-                return $response->json();
-            }
-        } catch (\Exception $e) {
-            return null;
-        }
-
-        return null;
-    }
-
-    private function gerarPdf($historia, $panelImages, $panelTexts)
-    {
-        $slug = $historia->slug;
-        $aluno = $historia->aluno;
-
-        $html = view('hq.pdf', compact('historia', 'aluno', 'panelImages', 'panelTexts'))->render();
-
-        $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'margin_top' => 15,
-            'margin_bottom' => 15,
-            'margin_left' => 15,
-            'margin_right' => 15,
-        ]);
-        $mpdf->WriteHTML($html);
-
-        $path = "hqs/{$slug}/historia.pdf";
-        Storage::disk('public')->put($path, $mpdf->Output('', 'S'));
-
-        return $path;
+        return view('hq.imprimir', compact('historia', 'aluno', 'panelImages', 'panelTexts'));
     }
 
     private function gerarQRCode($historia)
     {
-        $url = route('site.criar.download-pdf', ['slug' => $historia->slug]);
+        $url = route('site.criar.imprimir', ['slug' => $historia->slug]);
 
         $options = new QROptions([
             'outputInterface' => QRGdImagePNG::class,

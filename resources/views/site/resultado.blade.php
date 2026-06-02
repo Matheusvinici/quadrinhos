@@ -25,13 +25,11 @@
             @endif
 
             <div class="d-flex flex-column align-items-center gap-3 mt-4">
-                @if($historia->pdf_path)
-                    <a href="{{ route('site.criar.download-pdf', ['slug' => $historia->slug]) }}"
-                       target="_blank"
-                       class="btn-giant btn-green" style="min-width: 350px;">
-                        📥 Baixar PDF da HQ
-                    </a>
-                @endif
+                <a href="{{ route('site.criar.imprimir', ['slug' => $historia->slug]) }}"
+                   target="_blank"
+                   class="btn-giant btn-green" style="min-width: 350px;">
+                    📖 Ver e Imprimir HQ
+                </a>
 
                 <a href="{{ route('site.criar.iniciar') }}"
                    class="btn-giant btn-orange btn-sm" style="min-width: 250px;">

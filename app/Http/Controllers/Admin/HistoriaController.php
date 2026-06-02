@@ -36,12 +36,7 @@ class HistoriaController extends Controller
     {
         $historia = Historia::findOrFail($id);
 
-        if (!$historia->pdf_path || !Storage::disk('public')->exists($historia->pdf_path)) {
-            return back()->with('error', 'PDF não encontrado.');
-        }
-
-        $alunoNome = Str::slug($historia->aluno->nome);
-        return Storage::disk('public')->download($historia->pdf_path, "HQ_{$alunoNome}.pdf");
+        return redirect()->route('site.criar.imprimir', ['slug' => $historia->slug]);
     }
 
     public function destroy($id)

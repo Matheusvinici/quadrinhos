@@ -27,7 +27,7 @@ Route::middleware(['check.aluno'])->group(function () {
 
 // Resultado público
 Route::get('/hq/{slug}', [CriarHistoriaController::class, 'resultado'])->name('site.criar.resultado');
-Route::get('/hq/{slug}/pdf', [CriarHistoriaController::class, 'downloadPdf'])->name('site.criar.download-pdf');
+Route::get('/hq/{slug}/imprimir', [CriarHistoriaController::class, 'imprimir'])->name('site.criar.imprimir');
 
 // Admin - Mediador
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {

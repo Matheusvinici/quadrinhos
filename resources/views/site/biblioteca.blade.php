@@ -44,7 +44,7 @@
                                 <a href="{{ route('site.criar.resultado', ['slug' => $historia->slug]) }}" class="btn-giant btn-blue btn-sm" style="min-width: auto; font-size: 1rem; min-height: auto; padding: 0.5rem 1.5rem;">
                                     👁 Ver
                                 </a>
-                                <a href="{{ route('site.criar.download-pdf', ['slug' => $historia->slug]) }}" class="btn-giant btn-green btn-sm" style="min-width: auto; font-size: 1rem; min-height: auto; padding: 0.5rem 1.5rem;">
+                                <a href="{{ route('site.criar.imprimir', ['slug' => $historia->slug]) }}" target="_blank" class="btn-giant btn-green btn-sm" style="min-width: auto; font-size: 1rem; min-height: auto; padding: 0.5rem 1.5rem;">
                                     📥 PDF
                                 </a>
                             </div>
