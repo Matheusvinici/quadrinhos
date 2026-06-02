@@ -175,7 +175,7 @@ class CriarHistoriaController extends Controller
 
         $slug = $historia->slug;
 
-        $data = $this->chamarOllama($prompt, $historia);
+        $data = $this->chamarOpenRouter($prompt, $historia);
 
         $panelTexts = $data['panel_texts'] ?? [];
         $panelImages = $data['panel_images'] ?? [];
@@ -183,7 +183,7 @@ class CriarHistoriaController extends Controller
         $respostaGemini = [
             'panel_texts' => $panelTexts,
             'panel_images' => $panelImages,
-            'model' => 'deepseek-r1:1.5b',
+            'model' => config('services.openrouter.model', 'deepseek/deepseek-v4-flash:free'),
         ];
 
         $historia->update([
@@ -284,22 +284,49 @@ class CriarHistoriaController extends Controller
         return $texto;
     }
 
-    private function chamarOllama($prompt, $historia = null)
+    private function chamarOpenRouter($prompt, $historia = null)
     {
         try {
-            $response = Http::timeout(120)->post('http://127.0.0.1:11434/api/generate', [
-                'model' => 'deepseek-r1:1.5b',
-                'prompt' => $prompt,
-                'stream' => false,
-                'options' => [
-                    'num_predict' => 600,
-                    'temperature' => 0.7,
+            $apiKey = config('services.openrouter.key');
+            if (!$apiKey) {
+                throw new \Exception('OpenRouter API key not configured');
+            }
+
+            $model = config('services.openrouter.model', 'deepseek/deepseek-v4-flash:free');
+
+            $response = Http::timeout(120)->withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('app.url', 'http://localhost'),
+                'X-Title' => 'Jua Literaria Juazeiro',
+            ])->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'system', 'content' => 'Voce e um assistente que cria historias em quadrinhos infantis. Responda sempre em portugues brasileiro.'],
+                    ['role' => 'user', 'content' => $prompt],
                 ],
+                'max_tokens' => 600,
+                'temperature' => 0.7,
             ]);
 
             if (!$response->successful()) {
-                throw new \Exception('Ollama API error: ' . $response->body());
+                throw new \Exception('OpenRouter API error: ' . $response->body());
             }
+
+            $text = $response->json('choices.0.message.content', '');
+        } catch (\Exception $e) {
+            $nome = $historia && $historia->aluno ? $historia->aluno->nome : 'Aluno';
+            return [
+                'panel_texts' => [
+                    "Ola! Eu sou {$nome} e essa e minha historia!",
+                    "Infelizmente a IA nao conseguiu gerar sua HQ agora.",
+                    "Tente novamente clicando no botao 'Gerar com IA'.",
+                    "Enquanto isso, que tal desenhar sua historia no papel?"
+                ],
+                'panel_images' => [],
+            ];
+        }
+    }
 
             $text = $response->json('response', '');
 
@@ -371,6 +398,7 @@ class CriarHistoriaController extends Controller
             'Pedir ajuda ao seu professor',
             'desenhar sua própria história',
             'Infelizmente a IA local',
+            'Infelizmente a IA',
             'Tente novamente mais',
             'nao conseguiu gerar sua HQ',
             'desenhar sua historia no papel',
