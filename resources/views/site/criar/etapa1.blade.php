@@ -29,9 +29,8 @@
                     <label>{{ $pergunta }}</label>
                     @php
                         $respostaAnterior = $respostas->where('pergunta', $pergunta)->first();
-                        $inputType = in_array($key, ['olhos', 'pele', 'altura', 'fisico']) ? 'text' : 'text';
                     @endphp
-                    <input type="{{ $inputType }}" name="{{ $key }}" class="input-giant"
+                    <input type="text" name="{{ $key }}" class="input-giant"
                            value="{{ old($key, $respostaAnterior->resposta ?? '') }}"
                            placeholder="Digite aqui..." required>
                 </div>
