@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Jua Literária Juazeiro
-Sistema interativo para criação de histórias em quadrinhos personalizadas. Alunos preenchem um wizard de 4 etapas sobre sua identidade, e o Google Gemini gera automaticamente uma HQ com texto e imagens. O resultado é exportado em PDF estilo gibi com QR Code para compartilhamento.
+Sistema interativo para criação de histórias em quadrinhos personalizadas. Alunos preenchem um wizard de 4 etapas sobre sua identidade, e uma IA local (Ollama + DeepSeek R1 1.5B) gera automaticamente uma HQ com texto personalizado. O resultado é exibido em HTML estilo gibi com QR Code para compartilhamento.
 
 ## Acesso
 
@@ -19,8 +19,8 @@ Sistema interativo para criação de histórias em quadrinhos personalizadas. Al
 5. **Etapa 3** — Quem está com você? (família, amigos)
 6. **Etapa 4** — O que te move? (sonhos, brincadeiras, desafios)
 7. **Revisão** — resumo de tudo
-8. **Geração** — chama Gemini API → PDF → QR Code
-9. **Resultado** — QR Code na tela + botão de download PDF
+8. **Geração** — chama Ollama local → QR Code → HTML para impressão
+9. **Resultado** — QR Code na tela + botão "Ver e Imprimir HQ" + botão "Gerar com IA" (se conteúdo for fallback)
 
 ## Comandos
 
@@ -32,13 +32,14 @@ Sistema interativo para criação de histórias em quadrinhos personalizadas. Al
 | `php artisan db:seed` | Criar admin padrão |
 | `php artisan storage:link` | Link do storage público |
 | `npm run build` / `npm run dev` | Assets Vite |
+| `/tmp/ollama_extract/bin/ollama serve` | Iniciar Ollama (porta 11434) |
 
 ## Estrutura
 
 ### Rotas
 - **`routes/web.php`** — Rotas do site (alunos) + admin (mediador)
 - **SiteController** — Welcome, entrar, biblioteca
-- **CriarHistoriaController** — Wizard 4 etapas, Gemini, PDF, QR Code
+- **CriarHistoriaController** — Wizard 4 etapas, Ollama, QR Code, HTML print
 
 ### Modelos
 - **Aluno** — `id, nome, serie`
@@ -47,25 +48,30 @@ Sistema interativo para criação de histórias em quadrinhos personalizadas. Al
 
 ### Admin
 - **Dashboard** — Stats (alunos, histórias, hoje)
-- **Histórias** — Listar, ver detalhes, baixar PDF, excluir
+- **Histórias** — Listar, ver detalhes, excluir
 - **Alunos** — Listar, ver histórias de cada um
 
-## Integração Gemini
+## Integração IA Local (Ollama)
 
-- **Modelo**: `gemini-2.0-flash-exp` (com suporte a imagens)
-- **Fallback**: `gemini-2.0-flash` (texto apenas)
-- **Chave**: configurar `GEMINI_API_KEY` no `.env`
+- **Modelo**: `deepseek-r1:1.5b` (rodando localmente via Ollama)
+- **Endpoint**: `http://127.0.0.1:11434/api/generate`
+- **Instalação**: binary em `/tmp/ollama_extract/bin/ollama` (compilado manualmente)
+- **Iniciar**: `OLLAMA_HOST=127.0.0.1 /tmp/ollama_extract/bin/ollama serve`
+- **Sem dependência externa**: não precisa de chave de API, roda 100% local
 - **Prompt**: montado automaticamente com dados das 4 etapas
+- **Fallback**: se a IA local falhar, mostra textos padrão com botão "Gerar com IA" para tentar novamente
+- **Regeneração**: qualquer história com conteúdo fallback pode ser regenerada clicando no botão na página de resultado
 
 ## Setup
 
-1. `cp .env.example .env` (ou editar `.env` com `GEMINI_API_KEY`)
-2. `php artisan migrate`
-3. `php artisan db:seed`
-4. `php artisan storage:link`
+1. `php artisan migrate`
+2. `php artisan db:seed`
+3. `php artisan storage:link`
+4. Iniciar Ollama: `OLLAMA_HOST=127.0.0.1 /tmp/ollama_extract/bin/ollama serve`
 5. `composer dev`
 
 ## Interface
 - TV / touch screen (1920x1080)
 - Nunito font, cores vibrantes, botões grandes
 - Fundo gradiente animado com estrelas flutuantes
+- Impressão: HTML + CSS Grid com `@media print` e `window.print()`

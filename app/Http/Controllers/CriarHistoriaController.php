@@ -165,49 +165,39 @@ class CriarHistoriaController extends Controller
 
         $historia = Historia::with(['aluno', 'respostas'])->find(session('historia_id'));
 
+        return $this->processarGeracao($historia);
+    }
+
+    public function regenerar($slug)
+    {
+        $historia = Historia::with(['aluno', 'respostas'])->where('slug', $slug)->firstOrFail();
+
+        if (session('aluno_id') != $historia->aluno_id) {
+            return redirect()->route('site.welcome');
+        }
+
+        session(['historia_id' => $historia->id]);
+
+        return $this->processarGeracao($historia);
+    }
+
+    private function processarGeracao($historia)
+    {
         $prompt = $this->montarPrompt($historia);
         $historia->update(['prompt_gerado' => $prompt]);
 
         $slug = $historia->slug;
-        $apiKey = config('services.gemini.key');
-        if (!$apiKey) {
-            $respostaGemini = null;
-            $panelTexts = [
-                "Olá! Eu sou {$historia->aluno->nome} e essa é minha história!",
-                "Para gerar sua HQ completa, o mediador precisa configurar a chave da API Gemini no arquivo .env",
-                "Peça ajuda ao seu professor para ativar a inteligência artificial!",
-                "Enquanto isso, que tal desenhar sua própria história no papel?"
-            ];
-            $panelImages = [];
-        } else {
-            $respostaGemini = $this->chamarGemini($prompt);
-            $panelImages = [];
-            $panelTexts = [];
 
-            $storagePath = "hqs/{$slug}";
-            Storage::disk('public')->makeDirectory($storagePath);
+        $data = $this->chamarOllama($prompt, $historia);
 
-            if ($respostaGemini && isset($respostaGemini['candidates'][0]['content']['parts'])) {
-                $parts = $respostaGemini['candidates'][0]['content']['parts'];
-                $imageIndex = 0;
+        $panelTexts = $data['panel_texts'] ?? [];
+        $panelImages = $data['panel_images'] ?? [];
 
-                foreach ($parts as $part) {
-                    if (isset($part['text'])) {
-                        $panelTexts[] = $part['text'];
-                    } elseif (isset($part['inlineData']) && $part['inlineData']['mimeType'] === 'image/png') {
-                        $imageData = base64_decode($part['inlineData']['data']);
-                        $imagePath = "{$storagePath}/painel_{$imageIndex}.png";
-                        Storage::disk('public')->put($imagePath, $imageData);
-                        $panelImages[] = Storage::url($imagePath);
-                        $imageIndex++;
-                    }
-                }
-            }
-        }
-
-        $respostaGemini = $respostaGemini ?? [];
-        $respostaGemini['panel_texts'] = $panelTexts;
-        $respostaGemini['panel_images'] = $panelImages;
+        $respostaGemini = [
+            'panel_texts' => $panelTexts,
+            'panel_images' => $panelImages,
+            'model' => 'deepseek-r1:1.5b',
+        ];
 
         $historia->update([
             'status' => 'concluido',
@@ -229,7 +219,9 @@ class CriarHistoriaController extends Controller
     {
         $historia = Historia::with('aluno')->where('slug', $slug)->firstOrFail();
 
-        return view('site.resultado', compact('historia'));
+        $isFallback = $this->isFallbackContent($historia);
+
+        return view('site.resultado', compact('historia', 'isFallback'));
     }
 
     public function imprimir($slug)
@@ -277,5 +269,132 @@ class CriarHistoriaController extends Controller
         Storage::disk('public')->put($path, $imageData);
 
         return $path;
+    }
+
+    private function montarPrompt($historia)
+    {
+        $respostas = $historia->respostas->groupBy('etapa');
+        $aluno = $historia->aluno;
+
+        $texto = "Crie uma história em quadrinhos infantil com 4 quadros (painéis) para um aluno chamado {$aluno->nome}, da série {$aluno->serie}.\n\n";
+        $texto .= "Use as informações abaixo fornecidas pelo aluno para criar uma narrativa criativa e personalizada.\n\n";
+
+        foreach ($respostas as $etapa => $itens) {
+            $texto .= "--- Etapa {$etapa}: {$this->etapas[$etapa]} ---\n";
+            foreach ($itens as $resposta) {
+                $texto .= "{$resposta->pergunta}: {$resposta->resposta}\n";
+            }
+            $texto .= "\n";
+        }
+
+        $texto .= "\nIMPORTANTE: Responda APENAS com os textos dos 4 quadros, separados por '---'. Cada texto deve ter no máximo 2 frases curtas, linguagem infantil e criativa. Não use markdown. Exemplo:\n\n";
+        $texto .= "Texto do Quadro 1: Eu sou {$aluno->nome} e essa é a minha história!\n---\n";
+        $texto .= "Texto do Quadro 2: Aqui é onde eu moro, no bairro tal.\n---\n";
+        $texto .= "Texto do Quadro 3: Essas são as pessoas especiais da minha vida.\n---\n";
+        $texto .= "Texto do Quadro 4: Esse é o meu grande sonho!\n";
+
+        return $texto;
+    }
+
+    private function chamarOllama($prompt, $historia = null)
+    {
+        try {
+            $response = Http::timeout(120)->post('http://127.0.0.1:11434/api/generate', [
+                'model' => 'deepseek-r1:1.5b',
+                'prompt' => $prompt,
+                'stream' => false,
+                'options' => [
+                    'num_predict' => 1024,
+                    'temperature' => 0.8,
+                ],
+            ]);
+
+            if (!$response->successful()) {
+                throw new \Exception('Ollama API error: ' . $response->body());
+            }
+
+            $text = $response->json('response', '');
+
+            if (preg_match('/<think>.*?<\/think>/s', $text)) {
+                $text = preg_replace('/<think>.*?<\/think>/s', '', $text);
+            }
+
+            if (preg_match('/^.*?Texto do Quadro/s', $text, $m)) {
+                $startPos = strpos($text, $m[0]);
+                if ($startPos !== false) {
+                    $text = substr($text, $startPos);
+                }
+            } elseif (preg_match('/---\s*$/m', $text)) {
+                $text = preg_replace('/---\s*$/m', '', $text);
+            }
+
+            preg_match_all('/Texto do Quadro \d+:\s*(.*?)(?=\s*---|\s*Texto do Quadro \d+:|$)/s', $text, $matches);
+
+            $panelTexts = [];
+            if (!empty($matches[1])) {
+                $panelTexts = array_map(function($t) {
+                    return trim(preg_replace('/[\x00-\x1F\x7F]/', '', $t));
+                }, $matches[1]);
+            }
+
+            if (empty($panelTexts)) {
+                $lines = array_filter(explode("\n", $text), function($l) {
+                    return trim($l) !== '' && !str_starts_with(trim($l), '---');
+                });
+                $panelTexts = array_values(array_filter($lines));
+            }
+
+            $panelTexts = array_values(array_filter($panelTexts));
+
+            if (count($panelTexts) > 4) {
+                $panelTexts = array_slice($panelTexts, 0, 4);
+            }
+            while (count($panelTexts) < 4) {
+                $panelTexts[] = "Que aventura incrível!";
+            }
+
+            return [
+                'panel_texts' => $panelTexts,
+                'panel_images' => [],
+            ];
+        } catch (\Exception $e) {
+            $nome = $historia && $historia->aluno ? $historia->aluno->nome : 'Aluno';
+            return [
+                'panel_texts' => [
+                    "Olá! Eu sou {$nome} e essa é minha história!",
+                    "Infelizmente a IA local não conseguiu gerar sua HQ agora.",
+                    "Tente novamente mais clicando no botão 'Gerar com IA'.",
+                    "Enquanto isso, que tal desenhar sua história no papel?"
+                ],
+                'panel_images' => [],
+            ];
+        }
+    }
+
+    public function isFallbackContent($historia)
+    {
+        $resposta = $historia->resposta_gemini;
+        if (!$resposta || !isset($resposta['panel_texts'])) {
+            return true;
+        }
+        $texts = $resposta['panel_texts'];
+
+        $fallbackMarkers = [
+            'precisa configurar a chave',
+            'Pedir ajuda ao seu professor',
+            'desenhar sua própria história',
+            'Infelizmente a IA local',
+            'Tente novamente mais',
+        ];
+
+        foreach ($texts as $text) {
+            foreach ($fallbackMarkers as $marker) {
+                if (mb_strpos($text, $marker) !== false) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

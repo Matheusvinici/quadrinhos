@@ -23,6 +23,7 @@ Route::middleware(['check.aluno'])->group(function () {
     Route::post('/criar/etapa/{etapa}/salvar', [CriarHistoriaController::class, 'salvarEtapa'])->name('site.criar.salvar-etapa');
     Route::get('/criar/revisar', [CriarHistoriaController::class, 'revisar'])->name('site.criar.revisar');
     Route::post('/criar/gerar', [CriarHistoriaController::class, 'gerar'])->name('site.criar.gerar');
+    Route::post('/criar/regenerar/{slug}', [CriarHistoriaController::class, 'regenerar'])->name('site.criar.regenerar');
 });
 
 // Resultado público

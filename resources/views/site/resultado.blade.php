@@ -20,7 +20,7 @@
                          style="width: 280px; height: 280px; image-rendering: pixelated;">
                 </div>
                 <p style="font-size: 1.1rem; color: #666; margin-top: 0.8rem;">
-                    📱 Aponte a câmera do celular para baixar sua HQ!
+                    📱 Aponte a câmera do celular para ver sua HQ!
                 </p>
             @endif
 
@@ -30,6 +30,17 @@
                    class="btn-giant btn-green" style="min-width: 350px;">
                     📖 Ver e Imprimir HQ
                 </a>
+
+                @if($isFallback ?? false)
+                    <form action="{{ route('site.criar.regenerar', ['slug' => $historia->slug]) }}"
+                          method="POST" style="width: 100%;">
+                        @csrf
+                        <button type="submit"
+                                class="btn-giant btn-blue" style="min-width: 350px;">
+                            🤖 Gerar HQ com IA
+                        </button>
+                    </form>
+                @endif
 
                 <a href="{{ route('site.criar.iniciar') }}"
                    class="btn-giant btn-orange btn-sm" style="min-width: 250px;">
