@@ -28,7 +28,6 @@ class CriarHistoriaController extends Controller
             'nome' => 'Qual é o seu nome?',
             'idade' => 'Quantos anos você tem?',
             'pele' => 'Qual é o tom da sua pele?',
-            'fisico' => 'Você é magro(a), fortinho(a) ou mais cheinho(a)?',
         ],
         2 => [
             'bairro' => 'Em qual bairro ou comunidade você mora?',
