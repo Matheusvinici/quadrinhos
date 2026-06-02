@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Output\QRGdImagePNG;
 
 class CriarHistoriaController extends Controller
 {
@@ -362,10 +363,8 @@ PROMPT;
         $url = route('site.criar.download-pdf', ['slug' => $historia->slug]);
 
         $options = new QROptions([
-            'outputType' => QRCode::OUTPUT_IMAGE_PNG,
-            'eccLevel' => QRCode::ECC_L,
+            'outputInterface' => QRGdImagePNG::class,
             'scale' => 10,
-            'imageBase64' => false,
         ]);
 
         $qrcode = new QRCode($options);
