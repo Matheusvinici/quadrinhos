@@ -193,6 +193,7 @@
     @php
         $total = count($panelTexts);
         if ($total === 0) { $total = 1; $panelTexts = ['...']; }
+        $temImagens = !empty($panelImages) && count($panelImages) >= 4;
         $indices = range(0, $total - 1);
         $chunks = array_chunk($indices, 4);
     @endphp
@@ -205,8 +206,8 @@
                     @if($idx !== null)
                         <div class="panel">
                             <div class="panel-number">{{ $idx + 1 }}</div>
-                            @if(isset($panelImages[$idx]) && $panelImages[$idx])
-                                <img src="{{ $panelImages[$idx] }}" class="panel-img" alt="">
+                            @if($temImagens && isset($panelImages[$idx]) && $panelImages[$idx])
+                                <img src="{{ $panelImages[$idx] }}" class="panel-img" alt="Ilustração">
                             @else
                                 <div class="no-img">🎨</div>
                             @endif

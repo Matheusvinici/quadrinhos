@@ -178,12 +178,16 @@ class CriarHistoriaController extends Controller
         $data = $this->chamarOpenRouter($prompt, $historia);
 
         $panelTexts = $data['panel_texts'] ?? [];
-        $panelImages = $data['panel_images'] ?? [];
+        $panelImages = [];
+
+        if (!empty($panelTexts) && count($panelTexts) === 4) {
+            $panelImages = $this->sortearImagens();
+        }
 
         $respostaGemini = [
             'panel_texts' => $panelTexts,
             'panel_images' => $panelImages,
-            'model' => config('services.openrouter.model', 'deepseek/deepseek-v4-flash:free'),
+            'model' => config('services.openrouter.model', 'deepseek/deepseek-v4-flash'),
         ];
 
         $historia->update([
@@ -205,19 +209,15 @@ class CriarHistoriaController extends Controller
     public function resultado($slug)
     {
         $historia = Historia::with('aluno')->where('slug', $slug)->firstOrFail();
-
         $isFallback = $this->isFallbackContent($historia);
-
         return view('site.resultado', compact('historia', 'isFallback'));
     }
 
     public function imprimir($slug)
     {
         $historia = Historia::with('aluno')->where('slug', $slug)->firstOrFail();
-
         $panelTexts = [];
         $panelImages = [];
-
         $resposta = $historia->resposta_gemini;
         if ($resposta && isset($resposta['panel_texts'])) {
             $panelTexts = $resposta['panel_texts'];
@@ -225,7 +225,6 @@ class CriarHistoriaController extends Controller
         if ($resposta && isset($resposta['panel_images'])) {
             $panelImages = $resposta['panel_images'];
         }
-
         if (empty($panelTexts)) {
             $panelTexts = [
                 "Olá! Eu sou {$historia->aluno->nome} e essa é minha história!",
@@ -234,9 +233,7 @@ class CriarHistoriaController extends Controller
                 "Obrigado por fazer parte da Jua Literária Juazeiro!"
             ];
         }
-
         $aluno = $historia->aluno;
-
         return view('hq.imprimir', compact('historia', 'aluno', 'panelImages', 'panelTexts'));
     }
 
@@ -250,7 +247,13 @@ class CriarHistoriaController extends Controller
         ]);
 
         $qrcode = new QRCode($options);
-        $imageData = $qrcode->render($url);
+        $dataUri = $qrcode->render($url);
+
+        if (str_starts_with($dataUri, 'data:image/png;base64,')) {
+            $imageData = base64_decode(substr($dataUri, strlen('data:image/png;base64,')));
+        } else {
+            $imageData = $dataUri;
+        }
 
         $path = "hqs/{$historia->slug}/qrcode.png";
         Storage::disk('public')->put($path, $imageData);
@@ -262,16 +265,13 @@ class CriarHistoriaController extends Controller
     {
         $respostas = $historia->respostas->groupBy('etapa');
         $aluno = $historia->aluno;
-
         $texto = "Crie uma história infantil curta com 4 partes para um aluno chamado {$aluno->nome}.\n\n";
         $texto .= "Informacoes do aluno:\n";
-
         foreach ($respostas as $etapa => $itens) {
             foreach ($itens as $resposta) {
                 $texto .= "- {$resposta->resposta}\n";
             }
         }
-
         $texto .= "\nEscreva 4 frases curtas (uma para cada parte da historia). Separe cada frase com 3 tracos (---).\n";
         $texto .= "Use linguagem infantil, maximo 15 palavras por frase.\n";
         $texto .= "Responda APENAS as 4 frases separadas por ---, sem introducao ou conclusao.\n";
@@ -280,8 +280,24 @@ class CriarHistoriaController extends Controller
         $texto .= "Minha casa fica em um lugar muito legal.\n---\n";
         $texto .= "Minha familia e muito especial para mim.\n---\n";
         $texto .= "Meu maior sonho e ser feliz!\n";
-
         return $texto;
+    }
+
+    private function sortearImagens(): array
+    {
+        $dir = public_path('images/quadrinhos');
+        if (!is_dir($dir)) {
+            return [];
+        }
+        $arquivos = glob($dir . '/{*.png,*.jpg,*.jpeg,*.gif,*.webp}', GLOB_BRACE);
+        if (empty($arquivos)) {
+            return [];
+        }
+        shuffle($arquivos);
+        $selecionados = array_slice($arquivos, 0, 4);
+        return array_map(function ($path) {
+            return asset('images/quadrinhos/' . basename($path));
+        }, $selecionados);
     }
 
     private function chamarOpenRouter($prompt, $historia = null)
@@ -292,7 +308,7 @@ class CriarHistoriaController extends Controller
                 throw new \Exception('OpenRouter API key not configured');
             }
 
-            $model = config('services.openrouter.model', 'deepseek/deepseek-v4-flash:free');
+            $model = config('services.openrouter.model', 'deepseek/deepseek-v4-flash');
 
             $response = Http::timeout(120)->withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
