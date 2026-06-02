@@ -168,6 +168,7 @@ class CriarHistoriaController extends Controller
         $prompt = $this->montarPrompt($historia);
         $historia->update(['prompt_gerado' => $prompt]);
 
+        $slug = $historia->slug;
         $apiKey = config('services.gemini.key');
         if (!$apiKey) {
             $respostaGemini = null;
@@ -183,7 +184,6 @@ class CriarHistoriaController extends Controller
             $panelImages = [];
             $panelTexts = [];
 
-            $slug = $historia->slug;
             $storagePath = "hqs/{$slug}";
             Storage::disk('public')->makeDirectory($storagePath);
 
