@@ -263,22 +263,23 @@ class CriarHistoriaController extends Controller
         $respostas = $historia->respostas->groupBy('etapa');
         $aluno = $historia->aluno;
 
-        $texto = "Crie uma história em quadrinhos infantil com 4 quadros (painéis) para um aluno chamado {$aluno->nome}, da série {$aluno->serie}.\n\n";
-        $texto .= "Use as informações abaixo fornecidas pelo aluno para criar uma narrativa criativa e personalizada.\n\n";
+        $texto = "Crie uma história infantil curta com 4 partes para um aluno chamado {$aluno->nome}.\n\n";
+        $texto .= "Informacoes do aluno:\n";
 
         foreach ($respostas as $etapa => $itens) {
-            $texto .= "--- Etapa {$etapa}: {$this->etapas[$etapa]} ---\n";
             foreach ($itens as $resposta) {
-                $texto .= "{$resposta->pergunta}: {$resposta->resposta}\n";
+                $texto .= "- {$resposta->resposta}\n";
             }
-            $texto .= "\n";
         }
 
-        $texto .= "\nIMPORTANTE: Responda APENAS com os textos dos 4 quadros, separados por '---'. Cada texto deve ter no máximo 2 frases curtas, linguagem infantil e criativa. Não use markdown. Exemplo:\n\n";
-        $texto .= "Texto do Quadro 1: Eu sou {$aluno->nome} e essa é a minha história!\n---\n";
-        $texto .= "Texto do Quadro 2: Aqui é onde eu moro, no bairro tal.\n---\n";
-        $texto .= "Texto do Quadro 3: Essas são as pessoas especiais da minha vida.\n---\n";
-        $texto .= "Texto do Quadro 4: Esse é o meu grande sonho!\n";
+        $texto .= "\nEscreva 4 frases curtas (uma para cada parte da historia). Separe cada frase com 3 tracos (---).\n";
+        $texto .= "Use linguagem infantil, maximo 15 palavras por frase.\n";
+        $texto .= "Responda APENAS as 4 frases separadas por ---, sem introducao ou conclusao.\n";
+        $texto .= "\nExemplo:\n";
+        $texto .= "Eu sou {$aluno->nome} e vou contar minha historia!\n---\n";
+        $texto .= "Minha casa fica em um lugar muito legal.\n---\n";
+        $texto .= "Minha familia e muito especial para mim.\n---\n";
+        $texto .= "Meu maior sonho e ser feliz!\n";
 
         return $texto;
     }
@@ -291,8 +292,8 @@ class CriarHistoriaController extends Controller
                 'prompt' => $prompt,
                 'stream' => false,
                 'options' => [
-                    'num_predict' => 1024,
-                    'temperature' => 0.8,
+                    'num_predict' => 600,
+                    'temperature' => 0.7,
                 ],
             ]);
 
@@ -306,30 +307,29 @@ class CriarHistoriaController extends Controller
                 $text = preg_replace('/<think>.*?<\/think>/s', '', $text);
             }
 
-            if (preg_match('/^.*?Texto do Quadro/s', $text, $m)) {
-                $startPos = strpos($text, $m[0]);
-                if ($startPos !== false) {
-                    $text = substr($text, $startPos);
-                }
-            } elseif (preg_match('/---\s*$/m', $text)) {
-                $text = preg_replace('/---\s*$/m', '', $text);
-            }
+            $text = trim(preg_replace('/[\x00-\x1F\x7F]/', '', $text));
 
-            preg_match_all('/Texto do Quadro \d+:\s*(.*?)(?=\s*---|\s*Texto do Quadro \d+:|$)/s', $text, $matches);
-
+            $parts = preg_split('/---+/', $text);
             $panelTexts = [];
-            if (!empty($matches[1])) {
-                $panelTexts = array_map(function($t) {
-                    return trim(preg_replace('/[\x00-\x1F\x7F]/', '', $t));
-                }, $matches[1]);
+            foreach ($parts as $part) {
+                $part = trim($part);
+                if ($part !== '') {
+                    $panelTexts[] = $part;
+                }
             }
 
             if (empty($panelTexts)) {
-                $lines = array_filter(explode("\n", $text), function($l) {
-                    return trim($l) !== '' && !str_starts_with(trim($l), '---');
-                });
-                $panelTexts = array_values(array_filter($lines));
+                $panelTexts = array_values(array_filter(explode("\n", $text), function($l) {
+                    return trim($l) !== '';
+                }));
             }
+
+            $panelTexts = array_map(function($t) {
+                $t = preg_replace('/^\d+[\.\)]\s*/', '', trim($t));
+                $t = preg_replace('/^(Frase|Quadro|Painel)\s*\d+[\s:]*/i', '', $t);
+                $t = preg_replace('/^[*-]\s*/', '', $t);
+                return trim($t);
+            }, $panelTexts);
 
             $panelTexts = array_values(array_filter($panelTexts));
 
@@ -337,7 +337,7 @@ class CriarHistoriaController extends Controller
                 $panelTexts = array_slice($panelTexts, 0, 4);
             }
             while (count($panelTexts) < 4) {
-                $panelTexts[] = "Que aventura incrível!";
+                $panelTexts[] = "Que aventura incrivel!";
             }
 
             return [
@@ -348,10 +348,10 @@ class CriarHistoriaController extends Controller
             $nome = $historia && $historia->aluno ? $historia->aluno->nome : 'Aluno';
             return [
                 'panel_texts' => [
-                    "Olá! Eu sou {$nome} e essa é minha história!",
-                    "Infelizmente a IA local não conseguiu gerar sua HQ agora.",
-                    "Tente novamente mais clicando no botão 'Gerar com IA'.",
-                    "Enquanto isso, que tal desenhar sua história no papel?"
+                    "Ola! Eu sou {$nome} e essa e minha historia!",
+                    "Infelizmente a IA local nao conseguiu gerar sua HQ agora.",
+                    "Tente novamente mais clicando no botao 'Gerar com IA'.",
+                    "Enquanto isso, que tal desenhar sua historia no papel?"
                 ],
                 'panel_images' => [],
             ];
@@ -372,6 +372,8 @@ class CriarHistoriaController extends Controller
             'desenhar sua própria história',
             'Infelizmente a IA local',
             'Tente novamente mais',
+            'nao conseguiu gerar sua HQ',
+            'desenhar sua historia no papel',
         ];
 
         foreach ($texts as $text) {
