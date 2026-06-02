@@ -181,8 +181,7 @@
     <div class="cover-page">
         <div style="display: flex; align-items: center; justify-content: center; gap: 2rem; margin-bottom: 15mm; flex-wrap: wrap;">
             <img src="{{ asset('images/logo-prefeitura.png') }}" alt="Prefeitura de Juazeiro" style="height: 50px; width: auto; filter: brightness(10); opacity: 0.8;">
-            <img src="{{ asset('images/juaLiteraria.jpeg') }}" alt="Juá Literária" style="height: 50px; width: auto; filter: brightness(10); opacity: 0.8;">
-            <img src="{{ asset('images/logo-educajua.svg') }}" alt="Educa Juá" style="height: 50px; width: auto; filter: brightness(10); opacity: 0.8;">
+            <img src="{{ asset('images/educajua_v.svg') }}" alt="Educa Juá" style="height: 50px; width: auto; filter: brightness(10); opacity: 0.8;">
         </div>
         <h1>Jua Literária Juazeiro</h1>
         <h2>História em Quadrinhos</h2>

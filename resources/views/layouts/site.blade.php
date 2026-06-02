@@ -46,8 +46,9 @@
             gap: 2rem;
             padding: 0.8rem 2rem;
             z-index: 100;
-            background: rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.85);
             backdrop-filter: blur(8px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
         .logos-bar img { height: 45px; width: auto; }
         .logos-bar .logo-placeholder {
@@ -241,8 +242,7 @@
 <body>
     <div class="logos-bar">
         <img src="{{ asset('images/logo-prefeitura.png') }}" alt="Prefeitura de Juazeiro">
-        <img src="{{ asset('images/juaLiteraria.jpeg') }}" alt="Juá Literária">
-        <img src="{{ asset('images/logo-educajua.svg') }}" alt="Educa Juá">
+        <img src="{{ asset('images/educajua_v.svg') }}" alt="Educa Juá">
     </div>
     <div class="floating-stars" id="stars"></div>
     <div class="site-container">
