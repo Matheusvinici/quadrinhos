@@ -241,8 +241,8 @@
 <body>
     <div class="logos-bar">
         <img src="{{ asset('images/logo-prefeitura.png') }}" alt="Prefeitura de Juazeiro">
-        <div class="logo-placeholder">Juá Literária</div>
-        <div class="logo-placeholder">Educa Juá</div>
+        <img src="{{ asset('images/juaLiteraria.jpeg') }}" alt="Juá Literária">
+        <img src="{{ asset('images/logo-educajua.svg') }}" alt="Educa Juá">
     </div>
     <div class="floating-stars" id="stars"></div>
     <div class="site-container">
