@@ -31,27 +31,18 @@ class CriarHistoriaController extends Controller
         ],
         2 => [
             'bairro' => 'Em qual bairro ou comunidade você mora?',
-            'ruas' => 'Quais são as ruas e lugares perto da sua casa?',
             'clima' => 'Como é o clima onde você vive? (quente, frio, chuvoso?)',
-            'lugares' => 'Quais são seus lugares favoritos no seu bairro?',
             'escola' => 'Qual é o nome da sua escola?',
-            'caminho' => 'Como é o caminho até a escola?',
         ],
         3 => [
             'mora_com' => 'Com quem você mora?',
             'mae' => 'Conte um pouco sobre sua mãe (ou quem cuida de você)',
-            'pai' => 'Conte um pouco sobre seu pai',
             'irmaos' => 'Você tem irmãos? Quantos e como são?',
-            'amigos' => 'Quem são seus melhores amigos?',
-            'animal' => 'Você tem um animal de estimação?',
         ],
         4 => [
             'brincadeira' => 'Qual é sua brincadeira ou atividade favorita?',
             'sonho' => 'Qual é o seu maior sonho?',
-            'superpoder' => 'Se você tivesse um superpoder, qual seria?',
-            'medo' => 'Do que você tem mais medo?',
             'feliz' => 'O que te faz mais feliz?',
-            'desafio' => 'Qual foi o maior desafio que você já enfrentou?',
         ],
     ];
 

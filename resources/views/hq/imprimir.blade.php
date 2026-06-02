@@ -15,7 +15,7 @@
             color: #2D2D2D;
         }
 
-        .no-print { text-align: center; padding: 20px; background: #FF6B35; color: #fff; }
+        .no-print { text-align: center; padding: 20px; background: #3B8FC2; color: #fff; }
         .no-print button {
             font-family: 'Nunito', sans-serif;
             font-size: 1.2rem;
@@ -24,7 +24,7 @@
             border: none;
             border-radius: 15px;
             background: #fff;
-            color: #FF6B35;
+            color: #3B8FC2;
             cursor: pointer;
             margin: 0 8px;
             transition: transform 0.2s;
@@ -54,7 +54,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #FF6B35, #F7C59F, #004E89);
+            background: linear-gradient(135deg, #1A7CB8, #3DA87C, #0D5E8A);
             color: #fff;
             text-align: center;
             padding: 30mm;
@@ -104,7 +104,7 @@
             position: absolute;
             top: 5px;
             right: 8px;
-            background: #FF6B35;
+            background: #E8874A;
             color: #fff;
             width: 28px;
             height: 28px;
@@ -127,7 +127,7 @@
         .no-img {
             width: 100%;
             height: 65%;
-            background: linear-gradient(135deg, #FFEAA7, #FAB1A0);
+            background: linear-gradient(135deg, #A8D8EA, #C9E4DE);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -179,6 +179,11 @@
     </div>
 
     <div class="cover-page">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 2rem; margin-bottom: 15mm; flex-wrap: wrap;">
+            <img src="{{ asset('images/logo-prefeitura.png') }}" alt="Prefeitura de Juazeiro" style="height: 50px; width: auto; filter: brightness(10); opacity: 0.8;">
+            <div style="font-size: 20pt; font-weight: 800; opacity: 0.7;">Juá Literária</div>
+            <div style="font-size: 20pt; font-weight: 800; opacity: 0.7;">Educa Juá</div>
+        </div>
         <h1>Jua Literária Juazeiro</h1>
         <h2>História em Quadrinhos</h2>
         <div class="student-name">{{ $aluno->nome }}</div>

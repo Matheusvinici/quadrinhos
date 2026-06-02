@@ -13,7 +13,7 @@
         html, body { height: 100%; overflow: hidden; }
         body {
             font-family: 'Nunito', sans-serif;
-            background: linear-gradient(135deg, #FF6B35 0%, #F7C59F 30%, #004E89 70%, #1A659E 100%);
+            background: linear-gradient(135deg, #0D5E8A 0%, #1A7CB8 30%, #2E9EE0 60%, #4FB3E8 100%);
             background-size: 400% 400%;
             animation: gradientShift 15s ease infinite;
             color: #2D2D2D;
@@ -34,6 +34,33 @@
             justify-content: center;
             padding: 2rem;
             position: relative;
+        }
+        .logos-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            padding: 0.8rem 2rem;
+            z-index: 100;
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(8px);
+        }
+        .logos-bar img { height: 45px; width: auto; }
+        .logos-bar .logo-placeholder {
+            height: 45px;
+            padding: 0 1rem;
+            background: rgba(255,255,255,0.15);
+            border: 2px dashed rgba(255,255,255,0.4);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.7);
+            font-weight: 600;
         }
         .btn-giant {
             font-family: 'Nunito', sans-serif;
@@ -58,12 +85,12 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.3);
         }
         .btn-giant:active { transform: scale(0.98); }
-        .btn-orange { background: #FF6B35; color: #fff; }
-        .btn-green { background: #2ECC71; color: #fff; }
-        .btn-blue { background: #3498DB; color: #fff; }
+        .btn-orange { background: #E8874A; color: #fff; }
+        .btn-green { background: #3DA87C; color: #fff; }
+        .btn-blue { background: #3B8FC2; color: #fff; }
         .btn-purple { background: #9B59B6; color: #fff; }
         .btn-yellow { background: #F1C40F; color: #2D2D2D; }
-        .btn-white { background: #fff; color: #FF6B35; }
+        .btn-white { background: #fff; color: #E8874A; }
         .btn-outline { background: transparent; color: #fff; border: 3px solid #fff; }
         .btn-sm {
             font-size: 1.3rem;
@@ -106,7 +133,7 @@
             outline: none;
             transition: border-color 0.3s;
         }
-        .input-giant:focus { border-color: #FF6B35; }
+        .input-giant:focus { border-color: #E8874A; }
         label { font-size: 1.4rem; font-weight: 700; display: block; margin-bottom: 0.5rem; color: #2D2D2D; }
         .progress-bar {
             display: flex;
@@ -126,7 +153,7 @@
             color: #fff;
             transition: all 0.3s;
         }
-        .step-dot.active { background: #FF6B35; transform: scale(1.1); }
+        .step-dot.active { background: #E8874A; transform: scale(1.1); }
         .step-dot.done { background: #2ECC71; }
         .step-dot-label {
             font-size: 0.85rem;
@@ -138,7 +165,7 @@
         .etapa-title {
             font-size: 2.2rem;
             font-weight: 800;
-            color: #FF6B35;
+            color: #1A7CB8;
             text-align: center;
             margin-bottom: 1.5rem;
         }
@@ -212,6 +239,11 @@
     </style>
 </head>
 <body>
+    <div class="logos-bar">
+        <img src="{{ asset('images/logo-prefeitura.png') }}" alt="Prefeitura de Juazeiro">
+        <div class="logo-placeholder">Juá Literária</div>
+        <div class="logo-placeholder">Educa Juá</div>
+    </div>
     <div class="floating-stars" id="stars"></div>
     <div class="site-container">
         <div class="content">
