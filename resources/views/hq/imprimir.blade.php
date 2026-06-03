@@ -27,7 +27,6 @@
             color: #3B8FC2;
             cursor: pointer;
             margin: 0 8px;
-            transition: transform 0.2s;
         }
         .no-print button:hover { transform: scale(1.05); }
         .no-print a {
@@ -43,13 +42,18 @@
             margin: 0 8px;
             text-decoration: none;
             display: inline-block;
-            transition: transform 0.2s;
         }
         .no-print a:hover { transform: scale(1.05); }
 
-        .cover-page {
+        .page {
             width: 210mm;
             height: 297mm;
+            margin: 0 auto;
+            page-break-after: always;
+            overflow: hidden;
+        }
+
+        .cover-page {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -58,8 +62,22 @@
             color: #fff;
             text-align: center;
             padding: 30mm;
-            page-break-after: always;
-            margin: 0 auto;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .cover-logos {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 15mm;
+            flex-wrap: wrap;
+        }
+        .cover-logos img {
+            height: 50px;
+            width: auto;
+            filter: brightness(10);
+            opacity: 0.8;
         }
         .cover-page h1 { font-size: 48pt; font-weight: 900; margin-bottom: 8mm; text-shadow: 3px 3px 0 rgba(0,0,0,0.15); }
         .cover-page h2 { font-size: 22pt; font-weight: 600; opacity: 0.9; margin-bottom: 20mm; }
@@ -74,101 +92,105 @@
         .cover-page .info { font-size: 16pt; opacity: 0.8; margin-top: 8mm; }
         .cover-page .footer { font-size: 14pt; opacity: 0.5; margin-top: 40mm; }
 
-        .comic-page {
-            width: 210mm;
-            height: 297mm;
-            padding: 8mm;
-            page-break-after: always;
-            margin: 0 auto;
+        .content-page {
             background: #FFF8E7;
-        }
-        .comic-grid {
-            width: 100%;
-            height: 100%;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 6mm;
-        }
-        .panel {
-            border: 3px solid #2D2D2D;
-            border-radius: 4px;
-            background: #fff;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
-            position: relative;
-            box-shadow: 2px 2px 0 rgba(0,0,0,0.08);
+            padding: 12mm;
         }
-        .panel-number {
-            position: absolute;
-            top: 5px;
-            right: 8px;
-            background: #E8874A;
-            color: #fff;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+
+        .text-section {
+            flex: 0 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 10mm 12mm;
+            margin-bottom: 8mm;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 2px solid #E8E0D0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .text-section .label {
             font-size: 13pt;
-            font-weight: 900;
-            border: 2px solid #fff;
-            z-index: 2;
+            font-weight: 700;
+            color: #E8874A;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 4mm;
         }
-        .panel-img {
+
+        .text-section p {
+            font-size: 16pt;
+            font-weight: 600;
+            line-height: 1.7;
+            color: #2D2D2D;
+            margin-bottom: 0.4em;
+        }
+
+        .text-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .image-section {
+            flex: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f0f0f0;
+            border: 2px solid #E8E0D0;
+        }
+
+        .image-section img {
             width: 100%;
-            height: 65%;
+            height: 100%;
             object-fit: cover;
             display: block;
-            background: #f0f0f0;
         }
-        .no-img {
+
+        .image-section .placeholder {
             width: 100%;
-            height: 65%;
-            background: linear-gradient(135deg, #A8D8EA, #C9E4DE);
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40pt;
+            background: linear-gradient(135deg, #A8D8EA, #C9E4DE);
+            font-size: 48pt;
             color: #999;
         }
-        .panel-text {
-            padding: 6mm 8mm;
-            height: 35%;
-            font-size: 11pt;
-            line-height: 1.4;
-            background: #fff;
-            overflow: hidden;
-        }
-        .panel-empty {
-            border: 3px dashed #ddd;
-            border-radius: 4px;
-            background: #fafafa;
+
+        .student-info-bar {
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #ccc;
-            font-size: 30pt;
+            gap: 1rem;
+            margin-top: 6mm;
+            padding-top: 4mm;
+            border-top: 1px solid #E8E0D0;
+            font-size: 11pt;
+            color: #888;
+        }
+        .student-info-bar img {
+            height: 22px;
+            width: auto;
+            opacity: 0.5;
         }
 
         @media print {
             .no-print { display: none !important; }
-            body { background: #fff; }
-            .cover-page, .comic-page { margin: 0; width: 100%; height: 100vh; }
+            body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .page { margin: 0; width: 100%; height: 100vh; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             @page { margin: 0; size: A4; }
         }
 
         @media screen {
             body { padding: 20px; }
-            .cover-page, .comic-page {
+            .page {
                 box-shadow: 0 4px 20px rgba(0,0,0,0.15);
                 margin-bottom: 30px;
                 border-radius: 8px;
                 overflow: hidden;
             }
-            .comic-page { height: auto; min-height: 297mm; }
+            .content-page { height: auto; min-height: 100vh; }
         }
     </style>
 </head>
@@ -178,10 +200,16 @@
         <a href="#" onclick="window.close()">✕ Fechar</a>
     </div>
 
-    <div class="cover-page">
-        <div style="display: flex; align-items: center; justify-content: center; gap: 2rem; margin-bottom: 15mm; flex-wrap: wrap;">
-            <img src="{{ asset('images/logo-prefeitura.png') }}" alt="Prefeitura de Juazeiro" style="height: 50px; width: auto; filter: brightness(10); opacity: 0.8;">
-            <img src="{{ asset('images/educajua_v.svg') }}" alt="Educa Juá" style="height: 50px; width: auto; filter: brightness(10); opacity: 0.8;">
+    @php
+        $temImagem = !empty($panelImages) && !empty($panelImages[0]);
+        $bgImage = $temImagem ? $panelImages[0] : null;
+        $linhas = is_array($panelTexts) ? $panelTexts : [$panelTexts];
+    @endphp
+
+    <div class="page cover-page">
+        <div class="cover-logos">
+            <img src="{{ asset('images/logo-prefeitura.png') }}" alt="Prefeitura de Juazeiro">
+            <img src="{{ asset('images/educajua_v.svg') }}" alt="Educa Juá">
         </div>
         <h1>Jua Literária Juazeiro</h1>
         <h2>História em Quadrinhos</h2>
@@ -190,35 +218,27 @@
         <div class="footer">Uma história criada especialmente para você!</div>
     </div>
 
-    @php
-        $total = count($panelTexts);
-        if ($total === 0) { $total = 1; $panelTexts = ['...']; }
-        $temImagens = !empty($panelImages) && count($panelImages) >= 4;
-        $indices = range(0, $total - 1);
-        $chunks = array_chunk($indices, 4);
-    @endphp
-
-    @foreach($chunks as $panelIndices)
-        <div class="comic-page">
-            <div class="comic-grid">
-                @for($i = 0; $i < 4; $i++)
-                    @php $idx = $panelIndices[$i] ?? null; @endphp
-                    @if($idx !== null)
-                        <div class="panel">
-                            <div class="panel-number">{{ $idx + 1 }}</div>
-                            @if($temImagens && isset($panelImages[$idx]) && $panelImages[$idx])
-                                <img src="{{ $panelImages[$idx] }}" class="panel-img" alt="Ilustração">
-                            @else
-                                <div class="no-img">🎨</div>
-                            @endif
-                            <div class="panel-text">{{ $panelTexts[$idx] ?? '' }}</div>
-                        </div>
-                    @else
-                        <div class="panel-empty">✨</div>
-                    @endif
-                @endfor
-            </div>
+    <div class="page content-page">
+        <div class="text-section">
+            <div class="label">📖 Minha História</div>
+            @foreach($linhas as $linha)
+                <p>{{ $linha }}</p>
+            @endforeach
         </div>
-    @endforeach
+
+        <div class="image-section">
+            @if($bgImage)
+                <img src="{{ $bgImage }}" alt="Ilustração HQ">
+            @else
+                <div class="placeholder">🎨</div>
+            @endif
+        </div>
+
+        <div class="student-info-bar">
+            <img src="{{ asset('images/logo-prefeitura.png') }}" alt="">
+            <img src="{{ asset('images/educajua_v.svg') }}" alt="">
+            {{ $aluno->nome }} — {{ $aluno->serie }}
+        </div>
+    </div>
 </body>
 </html>

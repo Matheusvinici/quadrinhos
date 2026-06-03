@@ -25,24 +25,17 @@ class CriarHistoriaController extends Controller
 
     private $perguntas = [
         1 => [
-            'nome' => 'Qual é o seu nome?',
             'idade' => 'Quantos anos você tem?',
             'pele' => 'Qual é o tom da sua pele?',
         ],
         2 => [
             'bairro' => 'Em qual bairro ou comunidade você mora?',
-            'clima' => 'Como é o clima onde você vive? (quente, frio, chuvoso?)',
-            'escola' => 'Qual é o nome da sua escola?',
         ],
         3 => [
             'mora_com' => 'Com quem você mora?',
-            'mae' => 'Conte um pouco sobre sua mãe (ou quem cuida de você)',
-            'irmaos' => 'Você tem irmãos? Quantos e como são?',
         ],
         4 => [
-            'brincadeira' => 'Qual é sua brincadeira ou atividade favorita?',
             'sonho' => 'Qual é o seu maior sonho?',
-            'feliz' => 'O que te faz mais feliz?',
         ],
     ];
 
@@ -180,14 +173,18 @@ class CriarHistoriaController extends Controller
         $panelTexts = $data['panel_texts'] ?? [];
         $panelImages = [];
 
-        if (!empty($panelTexts) && count($panelTexts) === 4) {
-            $panelImages = $this->sortearImagens();
+        if (!empty($panelTexts)) {
+            $imagemPath = $this->gerarImagemAluno($historia);
+            if ($imagemPath) {
+                $panelImages = [$imagemPath];
+            } else {
+                $panelImages = $this->sortearImagens();
+            }
         }
 
         $respostaGemini = [
             'panel_texts' => $panelTexts,
             'panel_images' => $panelImages,
-            'model' => config('services.openrouter.model', 'deepseek/deepseek-v4-flash'),
         ];
 
         $historia->update([
@@ -261,26 +258,75 @@ class CriarHistoriaController extends Controller
         return $path;
     }
 
-    private function montarPrompt($historia)
+    private function gerarImagemAluno($historia): ?string
     {
-        $respostas = $historia->respostas->groupBy('etapa');
-        $aluno = $historia->aluno;
-        $texto = "Crie uma história infantil curta com 4 partes para um aluno chamado {$aluno->nome}.\n\n";
-        $texto .= "Informacoes do aluno:\n";
-        foreach ($respostas as $etapa => $itens) {
-            foreach ($itens as $resposta) {
-                $texto .= "- {$resposta->resposta}\n";
+        try {
+            $apiKey = config('services.openrouter.key');
+            if (!$apiKey) {
+                return null;
             }
+
+            $aluno = $historia->aluno;
+            $respostas = $historia->respostas->pluck('resposta', 'pergunta');
+
+            $idade = $respostas->get('Quantos anos você tem?', '');
+            $pele = $respostas->get('Qual é o tom da sua pele?', '');
+            $bairro = $respostas->get('Em qual bairro ou comunidade você mora?', '');
+            $moraCom = $respostas->get('Com quem você mora?', '');
+            $sonho = $respostas->get('Qual é o seu maior sonho?', '');
+
+            $promptImagem = "Ilustracao infantil colorida estilo HQ brasileira. ";
+            $promptImagem .= "Um(a) aluno(a) chamado(a) {$aluno->nome}";
+            if ($idade) $promptImagem .= ", {$idade} anos";
+            if ($pele) $promptImagem .= ", pele {$pele}";
+            $promptImagem .= ", sorrindo, em Juazeiro-BA";
+            if ($bairro) $promptImagem .= ", no bairro {$bairro}";
+            $promptImagem .= ", com a Ponte Presidente Dutra e o Rio Sao Francisco ao fundo, ceu azul, estilo cartoon brasileiro infantil, cores vibrantes, tracos simples e alegres.";
+
+            $response = Http::timeout(120)->withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('app.url', 'http://localhost'),
+                'X-Title' => 'Jua Literaria Juazeiro',
+            ])->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => 'google/gemini-2.5-flash-image',
+                'messages' => [
+                    ['role' => 'user', 'content' => $promptImagem],
+                ],
+                'max_tokens' => 2000,
+            ]);
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            $data = $response->json();
+            $images = $data['choices'][0]['message']['images'] ?? [];
+
+            if (empty($images)) {
+                return null;
+            }
+
+            $base64 = $images[0]['image_url']['url'] ?? '';
+            if (!$base64 || !str_starts_with($base64, 'data:image/png;base64,')) {
+                return null;
+            }
+
+            $imageData = base64_decode(substr($base64, strlen('data:image/png;base64,')));
+            if (!$imageData) {
+                return null;
+            }
+
+            $slug = $historia->slug;
+            $storagePath = "hqs/{$slug}";
+            Storage::disk('public')->makeDirectory($storagePath);
+            $imagePath = "{$storagePath}/capa_hq.png";
+            Storage::disk('public')->put($imagePath, $imageData);
+
+            return Storage::url($imagePath);
+        } catch (\Exception $e) {
+            return null;
         }
-        $texto .= "\nEscreva 4 frases curtas (uma para cada parte da historia). Separe cada frase com 3 tracos (---).\n";
-        $texto .= "Use linguagem infantil, maximo 15 palavras por frase.\n";
-        $texto .= "Responda APENAS as 4 frases separadas por ---, sem introducao ou conclusao.\n";
-        $texto .= "\nExemplo:\n";
-        $texto .= "Eu sou {$aluno->nome} e vou contar minha historia!\n---\n";
-        $texto .= "Minha casa fica em um lugar muito legal.\n---\n";
-        $texto .= "Minha familia e muito especial para mim.\n---\n";
-        $texto .= "Meu maior sonho e ser feliz!\n";
-        return $texto;
     }
 
     private function sortearImagens(): array
@@ -294,10 +340,33 @@ class CriarHistoriaController extends Controller
             return [];
         }
         shuffle($arquivos);
-        $selecionados = array_slice($arquivos, 0, 4);
+        $selecionados = array_slice($arquivos, 0, 1);
         return array_map(function ($path) {
             return asset('images/quadrinhos/' . basename($path));
         }, $selecionados);
+    }
+
+    private function montarPrompt($historia)
+    {
+        $respostas = $historia->respostas->groupBy('etapa');
+        $aluno = $historia->aluno;
+        $texto = "Crie uma história curta em formato de poema ou narrativa infantil sobre um aluno chamado {$aluno->nome}.\n\n";
+        $texto .= "Informacoes do aluno:\n";
+        foreach ($respostas as $etapa => $itens) {
+            foreach ($itens as $resposta) {
+                $texto .= "- {$resposta->resposta}\n";
+            }
+        }
+        $texto .= "\nEscreva 5 a 6 frases curtas contando a historia do aluno. Separe cada frase com 3 tracos (---).\n";
+        $texto .= "Use linguagem infantil, maximo 15 palavras por frase.\n";
+        $texto .= "Ambientada em Juazeiro-BA (Ponte Presidente Dutra, Rio Sao Francisco).\n";
+        $texto .= "Responda APENAS as frases separadas por ---, sem introducao ou conclusao.\n";
+        $texto .= "\nExemplo:\n";
+        $texto .= "Eu sou {$aluno->nome} e moro em Juazeiro!\n---\n";
+        $texto .= "Minha casa fica perto do Rio Sao Francisco.\n---\n";
+        $texto .= "Eu cruzo a Ponte Presidente Dutra todo dia.\n---\n";
+        $texto .= "Meu maior sonho e ser feliz!\n";
+        return $texto;
     }
 
     private function chamarOpenRouter($prompt, $historia = null)
@@ -318,10 +387,10 @@ class CriarHistoriaController extends Controller
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => $model,
                 'messages' => [
-                    ['role' => 'system', 'content' => 'Voce e um assistente que cria historias em quadrinhos infantis. Responda SEMPRE em portugues brasileiro. Gere EXATAMENTE 4 frases curtas separadas por ---. Nao use numeracao. Nao inclua introducao ou conclusao. Apenas as 4 frases separadas por ---.'],
+                    ['role' => 'system', 'content' => 'Voce e um assistente que cria historias infantis. Responda SEMPRE em portugues brasileiro. Gere 5 ou 6 frases curtas separadas por ---. Nao use numeracao. Nao inclua introducao ou conclusao. Apenas as frases separadas por ---.'],
                     ['role' => 'user', 'content' => $prompt],
                 ],
-                'max_tokens' => 1024,
+                'max_tokens' => 1536,
                 'temperature' => 0.8,
             ]);
 
@@ -348,18 +417,19 @@ class CriarHistoriaController extends Controller
 
             $panelTexts = array_map(function($t) {
                 $t = preg_replace('/^\d+[\.\)]\s*/', '', trim($t));
-                $t = preg_replace('/^(Frase|Quadro|Painel)\s*\d+[\s:]*/i', '', $t);
+                $t = preg_replace('/^(Frase|Quadro|Painel|Linha)\s*\d+[\s:]*/i', '', $t);
                 $t = preg_replace('/^[*-]\s*/', '', $t);
                 return trim($t);
             }, $panelTexts);
 
             $panelTexts = array_values(array_filter($panelTexts));
 
-            if (count($panelTexts) > 4) {
-                $panelTexts = array_slice($panelTexts, 0, 4);
+            if (count($panelTexts) > 7) {
+                $panelTexts = array_slice($panelTexts, 0, 7);
             }
-            while (count($panelTexts) < 4) {
-                $panelTexts[] = "Que aventura incrivel!";
+            if (empty($panelTexts)) {
+                $nome = $historia && $historia->aluno ? $historia->aluno->nome : 'Aluno';
+                $panelTexts = ["Ola! Eu sou {$nome} e essa e minha historia em Juazeiro!"];
             }
 
             return [
@@ -370,10 +440,11 @@ class CriarHistoriaController extends Controller
             $nome = $historia && $historia->aluno ? $historia->aluno->nome : 'Aluno';
             return [
                 'panel_texts' => [
-                    "Ola! Eu sou {$nome} e essa e minha historia!",
-                    "Infelizmente a IA nao conseguiu gerar sua HQ agora.",
-                    "Tente novamente clicando no botao 'Gerar com IA'.",
-                    "Enquanto isso, que tal desenhar sua historia no papel?"
+                    "Ola! Eu sou {$nome} e essa e minha historia em Juazeiro!",
+                    "Aqui ao lado do Rio Sao Francisco, tudo e mais bonito.",
+                    "Eu cruzo a Ponte Presidente Dutra todos os dias.",
+                    "Minha familia e meu lugar favorito no mundo.",
+                    "E meu maior sonho eu vou realizar!"
                 ],
                 'panel_images' => [],
             ];
@@ -389,14 +460,15 @@ class CriarHistoriaController extends Controller
         $texts = $resposta['panel_texts'];
 
         $fallbackMarkers = [
+            'Ola! Eu sou',
+            'esse e minha historia em Juazeiro!',
+            'Aqui ao lado do Rio Sao Francisco',
             'precisa configurar a chave',
             'Pedir ajuda ao seu professor',
             'desenhar sua própria história',
-            'Infelizmente a IA local',
             'Infelizmente a IA',
             'Tente novamente mais',
             'nao conseguiu gerar sua HQ',
-            'desenhar sua historia no papel',
         ];
 
         foreach ($texts as $text) {
