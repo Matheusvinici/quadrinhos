@@ -29,13 +29,29 @@ class CriarHistoriaController extends Controller
             'pele' => 'Qual é o tom da sua pele?',
         ],
         2 => [
-            'bairro' => 'Em qual bairro ou comunidade você mora?',
+            'bairro' => 'Em qual região de Juazeiro você mora?',
         ],
         3 => [
             'mora_com' => 'Com quem você mora?',
         ],
         4 => [
             'sonho' => 'Qual é o seu maior sonho?',
+        ],
+    ];
+
+    private $alternativas = [
+        1 => [
+            'idade' => ['6 anos', '7 anos', '8 anos', '9 anos', '10 anos', '11 anos', '12 anos'],
+            'pele' => ['Branca', 'Parda', 'Morena', 'Negra'],
+        ],
+        2 => [
+            'bairro' => ['Centro', 'Jardim Primavera', 'João Paulo II', 'São Geraldo', 'Tabuleiro', 'Outro'],
+        ],
+        3 => [
+            'mora_com' => ['Mãe e pai', 'Só minha mãe', 'Só meu pai', 'Meus avós', 'Outros familiares'],
+        ],
+        4 => [
+            'sonho' => ['Ser professor(a)', 'Ser médico(a)', 'Ser artista', 'Ser esportista', 'Viajar o mundo', 'Cuidar da minha família'],
         ],
     ];
 
@@ -71,6 +87,7 @@ class CriarHistoriaController extends Controller
 
         $historia = Historia::with('respostas')->find(session('historia_id'));
         $perguntas = $this->perguntas[$num];
+        $alternativas = $this->alternativas[$num];
         $respostas = $historia->respostas->where('etapa', $num);
 
         return view('site.criar.etapa' . $num, [
@@ -78,6 +95,7 @@ class CriarHistoriaController extends Controller
             'totalEtapas' => 4,
             'tituloEtapa' => $this->etapas[$num],
             'perguntas' => $perguntas,
+            'alternativas' => $alternativas,
             'respostas' => $respostas,
             'historia' => $historia,
         ]);
@@ -271,17 +289,29 @@ class CriarHistoriaController extends Controller
 
             $idade = $respostas->get('Quantos anos você tem?', '');
             $pele = $respostas->get('Qual é o tom da sua pele?', '');
-            $bairro = $respostas->get('Em qual bairro ou comunidade você mora?', '');
+            $bairro = $respostas->get('Em qual região de Juazeiro você mora?', '');
             $moraCom = $respostas->get('Com quem você mora?', '');
             $sonho = $respostas->get('Qual é o seu maior sonho?', '');
+
+            $fundos = [
+                "com a Ponte Presidente Dutra e o Rio Sao Francisco ao fundo",
+                "na Orla de Juazeiro, com o Rio Sao Francisco ao fundo",
+                "em frente a escola, com arvores e o ceu azul",
+                "numa praca arborizada de Juazeiro, com criancas brincando",
+                "no bairro {$bairro}, com casas coloridas e o Rio Sao Francisco ao longe",
+                "caminhando por uma rua arborizada de Juazeiro, com flores e passaros",
+            ];
+
+            $fundo = $fundos[array_rand($fundos)];
 
             $promptImagem = "Ilustracao infantil colorida estilo HQ brasileira. ";
             $promptImagem .= "Um(a) aluno(a) chamado(a) {$aluno->nome}";
             if ($idade) $promptImagem .= ", {$idade} anos";
             if ($pele) $promptImagem .= ", pele {$pele}";
             $promptImagem .= ", sorrindo, em Juazeiro-BA";
-            if ($bairro) $promptImagem .= ", no bairro {$bairro}";
-            $promptImagem .= ", com a Ponte Presidente Dutra e o Rio Sao Francisco ao fundo, ceu azul, estilo cartoon brasileiro infantil, cores vibrantes, tracos simples e alegres.";
+            $promptImagem .= ", {$fundo}";
+            $promptImagem .= ", ceu azul, estilo cartoon brasileiro infantil, cores vibrantes, tracos simples e alegres.";
+            $promptImagem .= " Nao coloque texto na imagem.";
 
             $response = Http::timeout(120)->withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
@@ -350,6 +380,24 @@ class CriarHistoriaController extends Controller
     {
         $respostas = $historia->respostas->groupBy('etapa');
         $aluno = $historia->aluno;
+
+        $cenarios = [
+            'Juazeiro-BA, cidade banhada pelo Rio Sao Francisco',
+            'Juazeiro-BA, na beira do Rio Sao Francisco',
+            'Juazeiro-BA, com suas ruas arborizadas e o Rio Sao Francisco',
+        ];
+
+        $locais = [
+            'na orla de Juazeiro',
+            'no bairro onde mora',
+            'na praca perto de casa',
+            'no caminho da escola',
+            'no parque da cidade',
+        ];
+
+        $cenario = $cenarios[array_rand($cenarios)];
+        $local = $locais[array_rand($locais)];
+
         $texto = "Crie uma história curta em formato de poema ou narrativa infantil sobre um aluno chamado {$aluno->nome}.\n\n";
         $texto .= "Informacoes do aluno:\n";
         foreach ($respostas as $etapa => $itens) {
@@ -359,12 +407,13 @@ class CriarHistoriaController extends Controller
         }
         $texto .= "\nEscreva 5 a 6 frases curtas contando a historia do aluno. Separe cada frase com 3 tracos (---).\n";
         $texto .= "Use linguagem infantil, maximo 15 palavras por frase.\n";
-        $texto .= "Ambientada em Juazeiro-BA (Ponte Presidente Dutra, Rio Sao Francisco).\n";
+        $texto .= "Ambientada em {$cenario}. A historia se passa {$local}.\n";
+        $texto .= "VARIE os lugares e pontos turisticos de Juazeiro citados em cada historia (nao repita sempre a Ponte).\n";
         $texto .= "Responda APENAS as frases separadas por ---, sem introducao ou conclusao.\n";
         $texto .= "\nExemplo:\n";
         $texto .= "Eu sou {$aluno->nome} e moro em Juazeiro!\n---\n";
         $texto .= "Minha casa fica perto do Rio Sao Francisco.\n---\n";
-        $texto .= "Eu cruzo a Ponte Presidente Dutra todo dia.\n---\n";
+        $texto .= "Eu adoro brincar na praca do meu bairro.\n---\n";
         $texto .= "Meu maior sonho e ser feliz!\n";
         return $texto;
     }

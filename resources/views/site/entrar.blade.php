@@ -17,9 +17,9 @@
                        required autofocus value="{{ old('nome') }}">
             </div>
             <div class="mb-4">
-                <label>Sua série/turma</label>
-                <input type="text" name="serie" class="input-giant" placeholder="Ex: 5º ano A..."
-                       required value="{{ old('serie') }}">
+                <label>Sua escola</label>
+                <input type="text" name="escola" class="input-giant" placeholder="Digite o nome da sua escola..."
+                       required value="{{ old('escola') }}">
             </div>
             <button type="submit" class="btn-giant btn-orange" style="width: 100%; margin-top: 1rem;">
                 ✨ Entrar

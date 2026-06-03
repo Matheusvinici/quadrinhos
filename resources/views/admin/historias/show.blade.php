@@ -9,7 +9,7 @@
     <div class="card">
         <h3 style="font-weight: 800; color: #FF6B35;">👤 Aluno</h3>
         <p><strong>Nome:</strong> {{ $historia->aluno->nome }}</p>
-        <p><strong>Série:</strong> {{ $historia->aluno->serie }}</p>
+        <p><strong>Escola:</strong> {{ $historia->aluno->escola }}</p>
         <p><strong>Criada em:</strong> {{ $historia->created_at->format('d/m/Y H:i') }}</p>
         <p><strong>Status:</strong> {{ $historia->status == 'concluido' ? '✅ Concluída' : '🔄 Rascunho' }}</p>
     </div>

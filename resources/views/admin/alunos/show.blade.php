@@ -8,7 +8,7 @@
 
     <div class="card">
         <p><strong>Nome:</strong> {{ $aluno->nome }}</p>
-        <p><strong>Série:</strong> {{ $aluno->serie }}</p>
+        <p><strong>Escola:</strong> {{ $aluno->escola }}</p>
         <p><strong>Cadastro:</strong> {{ $aluno->created_at->format('d/m/Y H:i') }}</p>
         <p><strong>Total de histórias:</strong> {{ $historias->count() }}</p>
     </div>

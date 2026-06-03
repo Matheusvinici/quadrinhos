@@ -23,11 +23,11 @@ class SiteController extends Controller
     {
         $request->validate([
             'nome' => 'required|string|max:255',
-            'serie' => 'required|string|max:100',
+            'escola' => 'required|string|max:200',
         ]);
 
         $aluno = Aluno::firstOrCreate(
-            ['nome' => $request->nome, 'serie' => $request->serie]
+            ['nome' => $request->nome, 'escola' => $request->escola]
         );
 
         session([

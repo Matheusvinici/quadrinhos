@@ -13,7 +13,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Aluno</th>
-                        <th>Série</th>
+                        <th>Escola</th>
                         <th>Status</th>
                         <th>Data</th>
                         <th>Ações</th>
@@ -24,7 +24,7 @@
                         <tr>
                             <td>#{{ $historia->id }}</td>
                             <td>{{ $historia->aluno->nome }}</td>
-                            <td>{{ $historia->aluno->serie }}</td>
+                            <td>{{ $historia->aluno->escola }}</td>
                             <td>
                                 @if($historia->status == 'concluido')
                                     <span style="color: #27AE60; font-weight: 700;">✅ Concluída</span>

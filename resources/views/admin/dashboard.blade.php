@@ -29,7 +29,7 @@
                 <thead>
                     <tr>
                         <th>Aluno</th>
-                        <th>Série</th>
+                        <th>Escola</th>
                         <th>Criada em</th>
                         <th>Ações</th>
                     </tr>
@@ -38,7 +38,7 @@
                     @foreach($ultimasHistorias as $historia)
                         <tr>
                             <td>{{ $historia->aluno->nome }}</td>
-                            <td>{{ $historia->aluno->serie }}</td>
+                            <td>{{ $historia->aluno->escola }}</td>
                             <td>{{ $historia->created_at->format('d/m/Y H:i') }}</td>
                             <td>
                                 <a href="{{ route('admin.historias.show', $historia->id) }}" class="btn btn-blue btn-sm">👁 Ver</a>

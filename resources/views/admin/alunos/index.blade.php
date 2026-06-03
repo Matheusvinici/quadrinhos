@@ -13,7 +13,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Nome</th>
-                        <th>Série</th>
+                        <th>Escola</th>
                         <th>Histórias</th>
                         <th>Cadastro</th>
                         <th>Ações</th>
@@ -24,7 +24,7 @@
                         <tr>
                             <td>#{{ $aluno->id }}</td>
                             <td>{{ $aluno->nome }}</td>
-                            <td>{{ $aluno->serie }}</td>
+                            <td>{{ $aluno->escola }}</td>
                             <td>{{ $aluno->historias_count }}</td>
                             <td>{{ $aluno->created_at->format('d/m/Y') }}</td>
                             <td>

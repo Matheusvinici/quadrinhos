@@ -9,7 +9,7 @@ class Aluno extends Model
 {
     protected $fillable = [
         'nome',
-        'serie',
+        'escola',
     ];
 
     public function historias(): HasMany

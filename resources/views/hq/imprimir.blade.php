@@ -214,7 +214,7 @@
         <h1>Jua Literária Juazeiro</h1>
         <h2>História em Quadrinhos</h2>
         <div class="student-name">{{ $aluno->nome }}</div>
-        <div class="info">Turma: {{ $aluno->serie }}</div>
+        <div class="info">Escola: {{ $aluno->escola }}</div>
         <div class="footer">Uma história criada especialmente para você!</div>
     </div>
 
@@ -237,7 +237,7 @@
         <div class="student-info-bar">
             <img src="{{ asset('images/logo-prefeitura.png') }}" alt="">
             <img src="{{ asset('images/educajua_v.svg') }}" alt="">
-            {{ $aluno->nome }} — {{ $aluno->serie }}
+            {{ $aluno->nome }} — {{ $aluno->escola }}
         </div>
     </div>
 </body>

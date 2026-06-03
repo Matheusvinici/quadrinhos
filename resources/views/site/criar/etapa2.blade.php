@@ -27,10 +27,21 @@
             @foreach($perguntas as $key => $pergunta)
                 <div class="question-item">
                     <label>{{ $pergunta }}</label>
-                    @php $respostaAnterior = $respostas->where('pergunta', $pergunta)->first(); @endphp
-                    <input type="text" name="{{ $key }}" class="input-giant"
-                           value="{{ old($key, $respostaAnterior->resposta ?? '') }}"
-                           placeholder="Digite aqui..." required>
+                    @php
+                        $respostaAnterior = $respostas->where('pergunta', $pergunta)->first();
+                        $valorAnterior = old($key, $respostaAnterior->resposta ?? '');
+                    @endphp
+                    <div class="options-grid">
+                        @foreach($alternativas[$key] as $opcao)
+                            <button type="button"
+                                    class="option-btn {{ $valorAnterior === $opcao ? 'selected' : '' }}"
+                                    data-key="{{ $key }}"
+                                    data-value="{{ $opcao }}">
+                                {{ $opcao }}
+                            </button>
+                        @endforeach
+                    </div>
+                    <input type="hidden" name="{{ $key }}" id="input-{{ $key }}" value="{{ $valorAnterior }}">
                 </div>
             @endforeach
 
@@ -46,3 +57,35 @@
         </form>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.querySelectorAll('.option-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const key = this.dataset.key;
+            document.querySelectorAll(`.option-btn[data-key="${key}"]`).forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('input-' + key).value = this.dataset.value;
+        });
+    });
+</script>
+<style>
+    .options-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
+    .option-btn {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 700;
+        padding: 0.8rem 1.8rem;
+        border: 3px solid #ddd;
+        border-radius: 16px;
+        background: #fff;
+        color: #555;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 100px;
+        text-align: center;
+    }
+    .option-btn:hover { border-color: #E8874A; color: #E8874A; transform: scale(1.03); }
+    .option-btn.selected { border-color: #E8874A; background: #E8874A; color: #fff; }
+</style>
+@endpush
